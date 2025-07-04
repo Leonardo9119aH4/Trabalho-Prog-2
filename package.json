@@ -1,0 +1,27 @@
+{
+  "name": "real-time-chat",
+  "version": "1.0.0",
+  "description": "real-time-chat",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --watch index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Leonardo9119aH4/Trabalho-Prog-2.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Leonardo9119aH4/Trabalho-Prog-2/issues"
+  },
+  "homepage": "https://github.com/Leonardo9119aH4/Trabalho-Prog-2#readme",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.0.1",
+    "express": "^5.1.0",
+    "mongoose": "^8.16.1"
+  }
+}
