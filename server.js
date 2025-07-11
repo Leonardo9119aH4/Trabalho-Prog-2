@@ -126,29 +126,6 @@ function setupServer(httpServer) {
         message: msg.message
       });
     });
-    
-    socket.on("disconnect", () => {
-      const username = connectedUsers.find(user => user.socketId === socket.id)?.username;
-      if (username) {
-        connectedUsers = connectedUsers.filter(user => user.socketId !== socket.id);
-        console.log(`🔴 Usuário desconectado: ${username}`);
-      }
-    });
-
-    socket.on("typing", data => {
-      if (data.isTyping) {
-        console.log(`${data.username} está digitando...`);
-        socket.broadcast.emit("typing", {
-          username: data.username,
-          isTyping: true
-        });
-      } else {
-        socket.broadcast.emit("typing", {
-          username: data.username,
-          isTyping: false
-        });
-      }
-    });
   });
 };
 
