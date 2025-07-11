@@ -1,6 +1,7 @@
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import { answerUser } from "./scriptGemini.js";
 
 const app = express();
 const httpServer = createServer(app);
@@ -10,6 +11,43 @@ app.use(express.static("public")); // coloque o HTML em /public
 
 // Armazenar usuários conectados
 const connectedUsers = new Map(); // socket.id -> username
+
+const processCommand = async (socket, username, message) => {
+  console.log('entrou no process')
+  const args = message.slice(1).split(' ');
+  const command = args[0].toLowerCase();
+
+  switch (command) {
+    case 'help':
+      socket.emit("command-response", {
+        message: "📋 Comandos disponíveis:\n/help - Mostra esta mensagem\n/users - Lista usuários online\n/time - Mostra horário atual\n/clear - Limpa seu chat\n/whisper [usuário] [mensagem] - Mensagem privada"
+      });
+      break;
+      
+    case 'users':
+      const userList = Array.from(connectedUsers.values()).join(', ');
+      socket.emit("command-response", {
+        message: `👥 Usuários online (${connectedUsers.size}): ${userList}`
+      });
+      break;
+      
+    case 'time':
+      const now = new Date().toLocaleString('pt-BR');
+      socket.emit("command-response", {
+        message: `🕒 Horário atual: ${now}`
+      });
+      break;
+    
+    case 'ia':
+      const answer = await answerUser(message - args[0]);
+      io.emit("message", {
+        username: IA,
+        message: answer
+      });
+      break;
+  };
+  return;
+};
 
 io.on("connection", socket => {
   console.log("🟢 Novo cliente conectado");
@@ -29,6 +67,12 @@ io.on("connection", socket => {
   });
 
   socket.on("message", msg => {
+
+    if (msg.message.startsWith('/')){
+      processCommand(socket, msg.username, msg.message);
+      return;
+    }
+
     console.log(`💬 ${msg.username}: ${msg.message}`);
     io.emit("message", {
       username: msg.username,
