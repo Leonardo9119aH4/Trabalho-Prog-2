@@ -29,5 +29,8 @@ app.use(session({
 
 app.use('/pages', express.static(path.join(__dirname, 'pages'))); // Servir as páginas estáticas
 //app.use('/public', express.static(path.join(__dirname, 'public'))); // Servir os arquivos públicos
+app.get("/", (req, res) => {
+  res.redirect("/pages/home/main.html");
+});
 routes(app);
 setupServer(httpServer);
