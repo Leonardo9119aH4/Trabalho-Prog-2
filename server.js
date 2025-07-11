@@ -154,47 +154,6 @@ function setupServer(httpServer) {
         username: msg.username,
         message: msg.message
       });
-
-      // Incrementar o contador de mensagens enviadas
-      User.findOneAndUpdate(
-        { username: msg.username },
-        { $inc: { messagesSent: 1 } },
-        { new: true }
-      ).catch(err => {
-        console.error("Erro ao atualizar mensagens enviadas:", err);
-      });
-
-      // Salvar a mensagem no banco de dados
-      const message = new Message({
-        username: msg.username,
-        message: msg.message
-      });
-      message.save().catch(err => {
-        console.error("Erro ao salvar mensagem:", err);
-      });
-    });
-
-    socket.on("disconnect", () => {
-      const username = connectedUsers.find(user => user.socketId === socket.id)?.username;
-      if (username) {
-        connectedUsers = connectedUsers.filter(user => user.socketId !== socket.id);
-        console.log(`🔴 Usuário desconectado: ${username}`);
-      }
-    });
-
-    socket.on("typing", data => {
-      if (data.isTyping) {
-        console.log(`${data.username} está digitando...`);
-        socket.broadcast.emit("typing", {
-          username: data.username,
-          isTyping: true
-        });
-      } else {
-        socket.broadcast.emit("typing", {
-          username: data.username,
-          isTyping: false
-        });
-      }
     });
   });
 };
