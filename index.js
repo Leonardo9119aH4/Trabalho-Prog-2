@@ -1,4 +1,5 @@
 import express from "express";
+import session from "express-session";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import mongoose, { set } from "mongoose";
@@ -13,9 +14,20 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
+const httpServer = createServer(app);
+httpServer.listen(3000, () => {
+    console.log("Servidor rodando na porta 3000");
+});
 mongoose.connect('mongodb://localhost', { useNewUrlParser: true, useUnifiedTopology: true });
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(session({
+  secret: "abc",
+  resave: false,
+  saveUninitialized: true
+}));
 
 app.use('/pages', express.static(path.join(__dirname, 'pages'))); // Servir as páginas estáticas
-app.use('/public', express.static(path.join(__dirname, 'public'))); // Servir os arquivos públicos
+//app.use('/public', express.static(path.join(__dirname, 'public'))); // Servir os arquivos públicos
 routes(app);
-setupServer(app);
+setupServer(httpServer);

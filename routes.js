@@ -22,7 +22,8 @@ function routes(app){
         if (user) {
             req.session.user = user;
             res.status(200).json('Login bem-sucedido');
-        } else {
+        }
+        else {
             res.status(401).json('Nome de usuário e/ou senha incorretos');
         }
     });
@@ -39,7 +40,8 @@ function routes(app){
     app.get('/user', (req, res) => {
         if (req.session.user) {
             res.status(200).json(req.session.user);
-        } else {
+        }
+        else {
             res.status(401).json('Usuário não autenticado');
         }
     });
@@ -47,7 +49,8 @@ function routes(app){
     app.get('/admin', (req, res) => {
         if (req.session.user && req.session.user.isAdmin) {
             res.status(200).json('Bem-vindo ao painel de administração');
-        } else {
+        }
+        else {
             res.status(403).json('Acesso negado');
         }
     });
@@ -62,7 +65,8 @@ function routes(app){
             user.isBaned = true;
             await user.save();
             res.status(200).json('Usuário banido com sucesso');
-        } else {
+        }
+        else {
             res.status(404).json('Usuário não encontrado');
         }
     });
@@ -77,7 +81,8 @@ function routes(app){
             user.isBaned = false;
             await user.save();
             res.status(200).json('Usuário desbanido com sucesso');
-        } else {
+        }
+        else {
             res.status(404).json('Usuário não encontrado');
         }
     });
