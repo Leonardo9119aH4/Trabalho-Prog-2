@@ -1,61 +1,89 @@
-body {
-    background-color: #000;
-    color: #00ff00;
-    font-family: 'Courier New', Courier, monospace;
-    padding: 2rem;
+.chat-container {
+    height: 500px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
-.terminal-box {
-    border: 2px solid #00ff00;
-    padding: 1rem;
-    height: 400px;
+.messages-box {
+    height: calc(100% - 100px);
     overflow-y: auto;
-    background-color: #000;
+    padding: 15px;
+    background-color: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-/* Estilo personalizado da barra de rolagem */
-.terminal-box::-webkit-scrollbar {
-    width: 12px;
+.message-input {
+    height: 60px;
+    border-top: 1px solid #ddd;
+    padding: 10px;
+    background-color: white;
+    display: flex;
+    align-items: center;
 }
 
-.terminal-box::-webkit-scrollbar-track {
-    background: #000;
-    border: 1px solid #00ff00;
-    border-radius: 10px;
+.message-container {
+    display: flex;
+    flex-direction: column;
+    max-width: 70%;
+    align-self: flex-start;
 }
 
-.terminal-box::-webkit-scrollbar-thumb {
-    background: #00ff00;
-    border-radius: 10px;
-    border: 2px solid #000;
+.message-container.sent {
+    align-self: flex-end;
 }
 
-.terminal-box::-webkit-scrollbar-thumb:hover {
-    background: #00cc00;
+.message-sender {
+    font-size: 0.8em;
+    font-weight: bold;
+    margin-bottom: 2px;
+    padding: 0 8px;
 }
 
-.terminal-box::-webkit-scrollbar-corner {
-    background: #000;
+.message {
+    padding: 8px 12px;
+    border-radius: 18px;
+    word-wrap: break-word;
 }
 
-input, button {
-    background-color: #000;
-    border: 1px solid #00ff00;
-    color: #00ff00;
+.received .message {
+    background-color: #e9ecef;
 }
 
-input:focus, button:hover {
-    background-color: #111;
-    outline: none;
+.sent .message {
+    background-color: #0d6efd;
+    color: white;
 }
 
-.msg {
-    margin-bottom: 0.5rem;
-}
-
-/* Estilo para mensagens do sistema */
 .system-msg {
-    color: #44ff44 !important;
+    align-self: center;
+    background-color: transparent;
+    color: #6c757d;
     font-style: italic;
-    opacity: 0.8;
+    font-size: 0.9em;
+}
+
+.typing-indicator {
+    font-size: 0.8em;
+    color: #6c757d;
+    font-style: italic;
+    padding: 5px 15px;
+    display: none;
+}
+
+.user-status {
+    font-size: 0.8em;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.online-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #28a745;
+    border-radius: 50%;
+    display: inline-block;
 }
