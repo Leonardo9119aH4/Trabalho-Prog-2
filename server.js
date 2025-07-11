@@ -2,8 +2,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { answerUser } from "./scriptGemini.js";
 
-function setupServer(app) {
-  const httpServer = createServer(app);
+function setupServer(httpServer) {
   const io = new Server(httpServer);
 
   // Armazenar usuários conectados
