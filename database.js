@@ -1,11 +1,11 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
+import { Schema } from "mongoose";
 mongoose.connect('mongodb://localhost', { useNewUrlParser: true, useUnifiedTopology: true });
 
-function database(){
-    const userSchema = new Schema({
-        username: String,
-        password: String
-    });
-}
+const userSchema = new Schema({
+    username: String,
+    password: String
+});
+const User = mongoose.model('User', userSchema);
 
-module.exports = {database};
+export { User };
