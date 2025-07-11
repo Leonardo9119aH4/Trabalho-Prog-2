@@ -10,7 +10,6 @@ function setupServer(httpServer) {
 
 
   const processCommand = async (socket, username, message) => {
-    console.log('entrou no process')
     const args = message.slice(1).split(' ');
     const command = args[0].toLowerCase();
 
@@ -36,9 +35,10 @@ function setupServer(httpServer) {
         break;
       
       case 'ia':
-        const answer = await answerUser(message - args[0]);
+        const answer = await answerUser(message);
+        
         io.emit("message", {
-          username: IA,
+          username: "IA",
           message: answer
         });
         break;
