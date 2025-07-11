@@ -70,10 +70,6 @@ function setupServer(httpServer) {
         message: msg.message
       });
     });
-
-    httpServer.listen(3000, "0.0.0.0", () => {
-      console.log(`✅ Servidor no ar: http://localhost:3000`);
-    });
   });
 };
 
