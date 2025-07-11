@@ -7,7 +7,7 @@ import path from "path";
 import { dirname } from 'path';
 dotenv.config();
 import {routes} from './routes.js';
-import { User } from './database.js';
+import { User, Mensage } from './database.js';
 import { setupServer } from "./server.js";
 import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
