@@ -52,3 +52,10 @@ input:focus, button:hover {
 .msg {
     margin-bottom: 0.5rem;
 }
+
+/* Estilo para mensagens do sistema */
+.system-msg {
+    color: #44ff44 !important;
+    font-style: italic;
+    opacity: 0.8;
+}

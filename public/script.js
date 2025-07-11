@@ -10,10 +10,20 @@ while (!username || username.trim() === "") {
 }
 username = username.trim();
 
-const appendMsg = (data) => {
+// Registrar usuário no servidor
+socket.emit("user-join", { username });
+
+const appendMsg = (data, type = "normal") => {
     const div = document.createElement("div");
-    div.textContent = `> ${data.username}: ${data.message}`;
-    div.classList.add("msg");
+    
+    if (type === "system") {
+        div.textContent = `👤 ${data.message}`;
+        div.classList.add("msg", "system-msg");
+    } else {
+        div.textContent = `> ${data.username}: ${data.message}`;
+        div.classList.add("msg");
+    }
+    
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
 };
@@ -29,4 +39,13 @@ form.addEventListener("submit", e => {
     }
 });
 
-socket.on("message", appendMsg);
+// Eventos do Socket.IO
+socket.on("message", data => appendMsg(data));
+
+socket.on("user-joined", data => {
+    appendMsg(data, "system");
+});
+
+socket.on("user-left", data => {
+    appendMsg(data, "system");
+});

@@ -8,8 +8,25 @@ const io = new Server(httpServer);
 
 app.use(express.static("public")); // coloque o HTML em /public
 
+// Armazenar usuários conectados
+const connectedUsers = new Map(); // socket.id -> username
+
 io.on("connection", socket => {
   console.log("🟢 Novo cliente conectado");
+
+  // Evento para quando o usuário se registra
+  socket.on("user-join", data => {
+    const { username } = data;
+    connectedUsers.set(socket.id, username);
+    
+    // Enviar mensagem de entrada para todos os outros usuários
+    socket.broadcast.emit("user-joined", {
+      username: username,
+      message: `${username} entrou no chat`
+    });
+    
+    console.log(`👤 ${username} entrou no chat`);
+  });
 
   socket.on("message", msg => {
     console.log(`💬 ${msg.username}: ${msg.message}`);
@@ -20,7 +37,19 @@ io.on("connection", socket => {
   });
 
   socket.on("disconnect", () => {
-    console.log("🔴 Cliente desconectado");
+    const username = connectedUsers.get(socket.id);
+    if (username) {
+      // Enviar mensagem de saída para todos os outros usuários
+      socket.broadcast.emit("user-left", {
+        username: username,
+        message: `${username} saiu do chat`
+      });
+      
+      connectedUsers.delete(socket.id);
+      console.log(`🔴 ${username} saiu do chat`);
+    } else {
+      console.log("🔴 Cliente desconectado");
+    }
   });
 });
 
