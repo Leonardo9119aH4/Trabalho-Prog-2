@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/Leonardo9119aH4/Trabalho-Prog-2#readme",
   "dependencies": {
+    "@google/genai": "^1.9.0",
     "body-parser": "^2.2.0",
     "bootstrap": "^5.3.7",
     "cookie-parser": "^1.4.7",
