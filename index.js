@@ -5,15 +5,16 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 dotenv.config();
 import {routes} from './routes.js';
-import { database } from './database.js';
+import { User } from './database.js';
 
 const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 mongoose.connect('mongodb://localhost', { useNewUrlParser: true, useUnifiedTopology: true });
 
-app.use('/pages', express.static(path.join(__dirname, 'pages')));
-app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use('/pages', express.static(path.join(__dirname, 'pages'))); // Servir as páginas estáticas
+app.use('/public', express.static(path.join(__dirname, 'public'))); // Servir os arquivos públicos
+routes(app);
 
 io.on("connection", socket => {
   console.log("🟢 Novo cliente conectado");
