@@ -1,37 +1,21 @@
 import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
-import mongoose from "mongoose";
+import mongoose, { set } from "mongoose";
 import dotenv from "dotenv";
+import path from "path";
+import { dirname } from 'path';
 dotenv.config();
 import {routes} from './routes.js';
 import { User } from './database.js';
+import { setupServer } from "./server.js";
+import { fileURLToPath } from 'url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer);
 mongoose.connect('mongodb://localhost', { useNewUrlParser: true, useUnifiedTopology: true });
 
 app.use('/pages', express.static(path.join(__dirname, 'pages'))); // Servir as páginas estáticas
 app.use('/public', express.static(path.join(__dirname, 'public'))); // Servir os arquivos públicos
 routes(app);
-
-io.on("connection", socket => {
-  console.log("🟢 Novo cliente conectado");
-
-  socket.on("message", msg => {
-    console.log(`💬 ${msg.username}: ${msg.message}`);
-    io.emit("message", {
-      username: msg.username,
-      message: msg.message
-    });
-  });
-
-  socket.on("disconnect", () => {
-    console.log("🔴 Cliente desconectado");
-  });
-});
-
-httpServer.listen(3000, "0.0.0.0", () => {
-  console.log(`✅ Servidor no ar: http://localhost:3000`);
-});
+setupServer(app);
