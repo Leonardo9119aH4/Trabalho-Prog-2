@@ -1,11 +1,19 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
-mongoose.connect('mongodb://localhost', { useNewUrlParser: true, useUnifiedTopology: true });
 
 const userSchema = new Schema({
     username: String,
-    password: String
+    password: String,
+    isAdmin: { type: Boolean, default: false },
+    isBaned: { type: Boolean, default: false }
 });
 const User = mongoose.model('User', userSchema);
 
-export { User };
+const mensageSchema = new Schema({
+    username: String,
+    message: String,
+    time: { type: Date, default: Date.now }
+});
+const Mensage = mongoose.model('Mensage', mensageSchema);
+
+export { User, Mensage };
