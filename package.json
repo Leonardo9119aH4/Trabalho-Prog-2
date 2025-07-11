@@ -2,7 +2,8 @@
   "name": "real-time-chat",
   "version": "1.0.0",
   "description": "real-time-chat",
-  "main": "index.js",
+  "main": "server.js",
+  "type": "module",
   "scripts": {
     "dev": "node --watch index.js"
   },
@@ -17,6 +18,8 @@
   },
   "homepage": "https://github.com/Leonardo9119aH4/Trabalho-Prog-2#readme",
   "dependencies": {
+    "bootstrap": "^5.3.7",
+    "socket.io": "^4.8.1",
     "body-parser": "^2.2.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
