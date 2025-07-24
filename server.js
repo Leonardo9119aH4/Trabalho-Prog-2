@@ -10,36 +10,82 @@ function setupServer(httpServer) {
 
 
   const processCommand = async (socket, username, message) => {
-    console.log('entrou no process')
     const args = message.slice(1).split(' ');
     const command = args[0].toLowerCase();
 
     switch (command) {
       case 'help':
-        socket.emit("command-response", {
-          message: "📋 Comandos disponíveis:\n/help - Mostra esta mensagem\n/users - Lista usuários online\n/time - Mostra horário atual\n/clear - Limpa seu chat\n/whisper [usuário] [mensagem] - Mensagem privada"
+        socket.emit("message", {
+          username: 'Sistema',
+          message: "📋 **Comandos disponíveis:**\n" +
+                   "• `/help` - Mostra esta mensagem\n" +
+                   "• `/users` - Lista usuários online\n" +
+                   "• `/time` - Mostra horário atual\n" +
+                   "• `/clear` - Limpa seu chat\n" +
+                   "• `/ia [mensagem]` - Conversa com a IA"
         });
         break;
         
       case 'users':
         const userList = Array.from(connectedUsers.values()).join(', ');
-        socket.emit("command-response", {
+        socket.emit("message", {
           message: `👥 Usuários online (${connectedUsers.size}): ${userList}`
         });
         break;
         
       case 'time':
         const now = new Date().toLocaleString('pt-BR');
-        socket.emit("command-response", {
+        socket.emit("message", {
+          username: 'Sistema',
           message: `🕒 Horário atual: ${now}`
         });
         break;
       
+      case 'clear':
+        socket.emit("message", {
+          username: 'Sistema',
+          message: "🧹 Chat limpo! (apenas para você)"
+        });
+        socket.emit("clear-chat");
+        break;
+      
       case 'ia':
-        const answer = await answerUser(message - args[0]);
-        io.emit("message", {
-          username: IA,
-          message: answer
+        // Extrair a mensagem após o comando /ia
+        const userMessage = args.slice(1).join(' ');
+        
+        if (!userMessage.trim()) {
+          socket.emit("message", {
+            username: 'Sistema',
+            message: "❌ Por favor, digite uma mensagem após o comando /ia\nExemplo: /ia Olá, como você está?"
+          });
+          return;
+        }
+        
+        try {
+          socket.emit("message", {
+            username: 'Sistema',
+            message: "🤖 Processando sua mensagem com a IA..."
+          });
+          
+          const answer = await answerUser(userMessage);
+          
+          io.emit("message", {
+            username: "🤖 IA",
+            message: answer
+          });
+        } catch (error) {
+          console.error("Erro ao processar comando /ia:", error);
+          socket.emit("message", {
+            username: 'Sistema',
+            message: "❌ Erro ao processar sua mensagem. Tente novamente."
+          });
+        }
+        break;
+      
+      default:
+        socket.emit("message", {
+          username: 'Sistema',
+          message: `❌ Comando desconhecido: \`${command}\`\nDigite \`/help\` para ver os comandos disponíveis.`
         });
         break;
     };
@@ -49,14 +95,6 @@ function setupServer(httpServer) {
   io.on("connection", socket => {
     console.log("🟢 Novo cliente conectado");
 
-      socket.on("message", msg => {
-        console.log(`💬 ${msg.username}: ${msg.message}`);
-        io.emit("message", {
-          username: msg.username,
-          message: msg.message
-        });
-      });
-
     socket.on("message", msg => {
 
       if (msg.message.startsWith('/')){
@@ -65,14 +103,25 @@ function setupServer(httpServer) {
       }
 
       console.log(`💬 ${msg.username}: ${msg.message}`);
+      
+      // Armazenar o usuário se ainda não estiver na lista
+      if (!connectedUsers.has(socket.id)) {
+        connectedUsers.set(socket.id, msg.username);
+        console.log(`👤 Novo usuário registrado: ${msg.username}`);
+      }
+      
       io.emit("message", {
         username: msg.username,
         message: msg.message
       });
     });
-
-    httpServer.listen(3000, "0.0.0.0", () => {
-      console.log(`✅ Servidor no ar: http://localhost:3000`);
+    
+    socket.on("disconnect", () => {
+      const username = connectedUsers.get(socket.id);
+      if (username) {
+        connectedUsers.delete(socket.id);
+        console.log(`🔴 ${username} desconectado`);
+      }
     });
   });
 };

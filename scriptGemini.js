@@ -1,8 +1,8 @@
 import { createPartFromUri, GoogleGenAI } from "@google/genai";
-dotenv.config();
-const apiKey = process.env.API_KEY;
 import dotenv from "dotenv";
+dotenv.config();
 
+const apiKey = process.env.API_KEY;
 const ai = new GoogleGenAI({ apiKey: apiKey});
 
 export async function answerUser(userQuestion){
@@ -36,18 +36,54 @@ export async function answerUser(userQuestion){
     `;
 
     const content = [{ text: prompt }];
-
-    // Enviando a solicitação ao modelo Gemini
     const requestPayload = [{ role: "user", parts: content }];
-    const response = await ai.models.generateContent({
-        model: "gemini-1.5-flash",
-        contents: requestPayload,
-    });
 
-    console.log(response);
-    console.log(response.text);
+    // Sistema de retry com backoff exponencial
+    const maxRetries = 3;
+    let retryCount = 0;
+    
+    while (retryCount < maxRetries) {
+        try {
+            console.log(`Tentativa ${retryCount + 1} de ${maxRetries} do Gemini`);
+            
+            // Enviando a solicitação ao modelo Gemini
+            const response = await ai.models.generateContent({
+                model: "gemini-2.0-flash-lite",
+                contents: requestPayload,
+            });
 
-    return;        
+            console.log("Resposta recebida com sucesso!");
+            const responseText = response.text;
+            
+            return responseText;
+            
+        } catch (error) {
+            retryCount++;
+            console.error(`Erro na tentativa ${retryCount}:`, error.message);
+            
+            if (error.status === 503 && retryCount < maxRetries) {
+                // Modelo sobrecarregado - aguardar antes de tentar novamente
+                const waitTime = Math.pow(2, retryCount) * 1000; // Backoff exponencial: 2s, 4s, 8s
+                console.log(`Modelo sobrecarregado. Aguardando ${waitTime/1000}s antes da próxima tentativa...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+                continue;
+            } else if (error.status === 400) {
+                // Erro de API key ou formato da requisição
+                console.error("Erro de API key ou formato da requisição:", error.message);
+                return "Desculpe, ocorreu um erro técnico. Tente novamente em alguns instantes.";
+            } else if (retryCount >= maxRetries) {
+                // Esgotou todas as tentativas
+                console.error("Esgotadas todas as tentativas de retry");
+                return "Desculpe, o serviço está temporariamente indisponível. Tente novamente em alguns minutos.";
+            } else {
+                // Outros erros
+                console.error("Erro inesperado:", error.message);
+                return "Desculpe, ocorreu um erro inesperado. Tente novamente.";
+            }
+        }
+    }
+    
+    return "Desculpe, não foi possível processar sua mensagem no momento. Tente novamente mais tarde.";
 };
 
 console.log("Script Gemini inicializado");
