@@ -120,3 +120,13 @@ document.addEventListener('DOMContentLoaded', function() {
         messagesBox.scrollTop = messagesBox.scrollHeight;
     });
 });
+
+/*------------------------------------------------------------*/
+
+const profileName = document.querySelector('#profileName');
+const profileNumberMessages = document.querySelector('#profileNumberMessages');
+const profileHours = document.querySelector('#profileHours');
+
+profileName.innerText = /*variavel do banco*/;
+profileNumberMessages.innerText = /*variavel do banco*/;
+profileHours.innerText = /*variavel do banco*/;
