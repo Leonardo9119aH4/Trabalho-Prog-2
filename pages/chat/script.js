@@ -147,17 +147,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         messagesBox.scrollTop = messagesBox.scrollHeight;
     });
-
-    socket.on('user-joined', users => {
-        // Atualizar lista de usuários conectados
-        userListElement.innerHTML = ''; // Limpar lista atual
-        console.log(users.connectedUsers)
-        users.connectedUsers.forEach((username) => {
-            const userItem = document.createElement('li');
-            userItem.textContent = username;
-            userListElement.appendChild(userItem);
-        });
-    })
 });
 
 /*------------------------------------------------------------*/
@@ -166,16 +155,6 @@ const profileName = document.querySelector('#profileName');
 const profileNumberMessages = document.querySelector('#profileNumberMessages');
 const profileHours = document.querySelector('#profileHours');
 
-try {
-    fetch('/session-id')
-  .then(res => res.json())
-  .then(data => {
-    console.log('Session ID:', data.sessionId);
-  });
-} catch (error) {
-    console.error('Error fetching session ID:', error);
-}
-
-profileName.innerText = profileName.innerText + " " + username;
-// profileNumberMessages.innerText = /*variavel do banco*/
-// profileHours.innerText = /*variavel do banco*/
+profileName.innerText = /*variavel do banco*/;
+profileNumberMessages.innerText = /*variavel do banco*/;
+profileHours.innerText = /*variavel do banco*/;
