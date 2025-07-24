@@ -89,7 +89,7 @@ function routes(app){
 
     app.get('/session-id', async (req, res) => {
         const user = await User.findOne({ id: sessionId });
-        res.json({ user: username });
+        res.json({ user: username, user:  });
     });
 }
 
