@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const typingIndicator = document.getElementById('typing-indicator');
     const currentUsernameElement = document.getElementById('current-username');
     const statusElement = document.getElementById('status');
+    const userListElement = document.getElementById('users-list');
     
     // Variável para controlar timeout de digitação
     let typingTimeout;
@@ -21,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
     currentUsernameElement.textContent = username;
     
     // Registrar usuário no servidor
-    socket.emit("user-join", { username });
+    socket.emit("connection", { username });
     
     // Atualizar status da conexão
     socket.on('connect', () => {
@@ -87,13 +88,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Detectar quando o usuário está digitando
     messageInput.addEventListener('input', () => {
-        socket.emit('typing', true);
+        socket.emit('typing', {username: username, isTyping: true});
+        console.log(`${username} está digitando...`);
         
         // Resetar o timeout
         clearTimeout(typingTimeout);
         typingTimeout = setTimeout(() => {
             socket.emit('typing', false);
-        }, 2000);
+        }, 500);
     });
     
     // Event listeners
@@ -106,7 +108,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Eventos do Socket.IO
     socket.on("message", data => appendMessage(data));
-    socket.on("user-joined", data => appendMessage(data, "system"));
     socket.on("user-left", data => appendMessage(data, "system"));
     
     // Receber notificação de digitação
@@ -119,4 +120,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         messagesBox.scrollTop = messagesBox.scrollHeight;
     });
+
+    socket.on('user-joined', users => {
+        // Atualizar lista de usuários conectados
+        userListElement.innerHTML = ''; // Limpar lista atual
+        console.log(users.connectedUsers)
+        users.connectedUsers.forEach((username) => {
+            const userItem = document.createElement('li');
+            userItem.textContent = username;
+            userListElement.appendChild(userItem);
+        });
+    })
 });

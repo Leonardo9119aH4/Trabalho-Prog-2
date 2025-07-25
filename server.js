@@ -1,12 +1,13 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { answerUser } from "./scriptGemini.js";
+import { connect } from "http2";
 
 function setupServer(httpServer) {
   const io = new Server(httpServer);
 
   // Armazenar usuários conectados
-  const connectedUsers = new Map(); // socket.id -> username
+  let connectedUsers = []; // socket.id -> username
 
 
   const processCommand = async (socket, username, message) => {
@@ -94,6 +95,16 @@ function setupServer(httpServer) {
 
   io.on("connection", socket => {
     console.log("🟢 Novo cliente conectado");
+    socket.on("connection", data => {
+      io.emit("message", {
+        username: 'Sistema',
+        message: `👋 ${data.username} entrou no chat!`
+      });
+      connectedUsers.push(data.username);
+      io.emit("user-joined", {
+        users: connectedUsers,
+      });
+    });
 
     socket.on("message", msg => {
 
@@ -117,10 +128,25 @@ function setupServer(httpServer) {
     });
     
     socket.on("disconnect", () => {
-      const username = connectedUsers.get(socket.id);
+      const username = connectedUsers.find(user => user.socketId === socket.id)?.username;
       if (username) {
-        connectedUsers.delete(socket.id);
-        console.log(`🔴 ${username} desconectado`);
+        connectedUsers = connectedUsers.filter(user => user.socketId !== socket.id);
+        console.log(`🔴 Usuário desconectado: ${username}`);
+      }
+    });
+
+    socket.on("typing", data => {
+      if (data.isTyping) {
+        console.log(`${data.username} está digitando...`);
+        socket.broadcast.emit("typing", {
+          username: data.username,
+          isTyping: true
+        });
+      } else {
+        socket.broadcast.emit("typing", {
+          username: data.username,
+          isTyping: false
+        });
       }
     });
   });
