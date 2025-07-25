@@ -137,6 +137,6 @@ try {
     console.error('Error fetching session ID:', error);
 }
 
-profileName.innerText = username;
-profileNumberMessages.innerText = /*variavel do banco*/;
-profileHours.innerText = /*variavel do banco*/;
+profileName.innerText = profileName.innerText + " " + username;
+// profileNumberMessages.innerText = /*variavel do banco*/
+// profileHours.innerText = /*variavel do banco*/
