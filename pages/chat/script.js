@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const currentUsernameElement = document.getElementById('current-username');
     const statusElement = document.getElementById('status');
     const userListElement = document.getElementById('users-list');
-
+    
     // Variável para controlar timeout de digitação
     let typingTimeout;
 
@@ -159,13 +159,3 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     })
 });
-
-/*------------------------------------------------------------*/
-
-const profileName = document.querySelector('#profileName');
-const profileNumberMessages = document.querySelector('#profileNumberMessages');
-const profileHours = document.querySelector('#profileHours');
-
-profileName.innerText = /*variavel do banco*/;
-profileNumberMessages.innerText = /*variavel do banco*/;
-profileHours.innerText = /*variavel do banco*/;
