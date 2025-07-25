@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const currentUsernameElement = document.getElementById('current-username');
     const statusElement = document.getElementById('status');
     const userListElement = document.getElementById('users-list');
-
+    
     // Variável para controlar timeout de digitação
     let typingTimeout;
 
