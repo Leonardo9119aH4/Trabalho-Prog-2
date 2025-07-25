@@ -29,7 +29,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const typingIndicator = document.getElementById('typing-indicator');
     const currentUsernameElement = document.getElementById('current-username');
     const statusElement = document.getElementById('status');
-
+    const userListElement = document.getElementById('users-list');
+    
     // Variável para controlar timeout de digitação
     let typingTimeout;
 
@@ -37,8 +38,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     currentUsernameElement.textContent = username;
 
     // Registrar usuário no servidor
-    socket.emit("user-join", { username });
-
+    socket.emit("connection", { username });
+    
     // Atualizar status da conexão
     socket.on('connect', () => {
         statusElement.textContent = 'Conectado';
@@ -158,23 +159,3 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     })
 });
-
-/*------------------------------------------------------------*/
-
-const profileName = document.querySelector('#profileName');
-const profileNumberMessages = document.querySelector('#profileNumberMessages');
-const profileHours = document.querySelector('#profileHours');
-
-try {
-    fetch('/session-id')
-  .then(res => res.json())
-  .then(data => {
-    console.log('Session ID:', data.sessionId);
-  });
-} catch (error) {
-    console.error('Error fetching session ID:', error);
-}
-
-profileName.innerText = username;
-profileNumberMessages.innerText = /*variavel do banco*/;
-profileHours.innerText = /*variavel do banco*/;
