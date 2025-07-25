@@ -15,9 +15,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const httpServer = createServer(app);
-httpServer.listen(3000, () => {
-    console.log("Servidor rodando na porta 3000");
+
+httpServer.listen(3000, "0.0.0.0", () => {
+    console.log(`✅ Servidor no ar: http://localhost:3000`);
 });
+
 mongoose.connect('mongodb://localhost', { useNewUrlParser: true, useUnifiedTopology: true });
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
