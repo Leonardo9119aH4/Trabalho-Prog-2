@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const currentUsernameElement = document.getElementById('current-username');
     const statusElement = document.getElementById('status');
     const userListElement = document.getElementById('users-list');
-    
+
     // Variável para controlar timeout de digitação
     let typingTimeout;
 
@@ -147,6 +147,17 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         messagesBox.scrollTop = messagesBox.scrollHeight;
     });
+
+    socket.on('user-joined', users => {
+        // Atualizar lista de usuários conectados
+        userListElement.innerHTML = ''; // Limpar lista atual
+        console.log(users.connectedUsers)
+        users.connectedUsers.forEach((username) => {
+            const userItem = document.createElement('li');
+            userItem.textContent = username;
+            userListElement.appendChild(userItem);
+        });
+    })
 });
 
 /*------------------------------------------------------------*/
