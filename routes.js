@@ -86,6 +86,11 @@ function routes(app){
             res.status(404).json('Usuário não encontrado');
         }
     });
+
+    app.get('/session-id', async (req, res) => {
+        const user = await User.findOne({ id: sessionId });
+        res.json({ user: username });
+    });
 }
 
 export { routes };

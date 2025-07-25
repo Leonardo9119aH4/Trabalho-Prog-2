@@ -127,6 +127,16 @@ const profileName = document.querySelector('#profileName');
 const profileNumberMessages = document.querySelector('#profileNumberMessages');
 const profileHours = document.querySelector('#profileHours');
 
-profileName.innerText = /*variavel do banco*/;
+try {
+    fetch('/session-id')
+  .then(res => res.json())
+  .then(data => {
+    console.log('Session ID:', data.sessionId);
+  });
+} catch (error) {
+    console.error('Error fetching session ID:', error);
+}
+
+profileName.innerText = username;
 profileNumberMessages.innerText = /*variavel do banco*/;
 profileHours.innerText = /*variavel do banco*/;
