@@ -29,7 +29,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const typingIndicator = document.getElementById('typing-indicator');
     const currentUsernameElement = document.getElementById('current-username');
     const statusElement = document.getElementById('status');
-
+    const userListElement = document.getElementById('users-list');
+    
     // Variável para controlar timeout de digitação
     let typingTimeout;
 
@@ -37,8 +38,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     currentUsernameElement.textContent = username;
 
     // Registrar usuário no servidor
-    socket.emit("user-join", { username });
-
+    socket.emit("connection", { username });
+    
     // Atualizar status da conexão
     socket.on('connect', () => {
         statusElement.textContent = 'Conectado';
