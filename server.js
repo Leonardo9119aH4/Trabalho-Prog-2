@@ -1,14 +1,13 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { answerUser } from "./scriptGemini.js";
-import { connect } from "http2";
+import { User, Message } from './database.js';
 
 function setupServer(httpServer) {
   const io = new Server(httpServer);
 
   // Armazenar usuários conectados
-  let connectedUsers = []; // socket.id -> username
-
+  const connectedUsers = new Map(); // socket.id -> username
 
   const processCommand = async (socket, username, message) => {
     const args = message.slice(1).split(' ');
@@ -123,15 +122,19 @@ function setupServer(httpServer) {
 
   io.on("connection", socket => {
     console.log("🟢 Novo cliente conectado");
-    socket.on("connection", data => {
-      io.emit("message", {
-        username: 'Sistema',
-        message: `👋 ${data.username} entrou no chat!`
+
+    // Enviar mensagens salvas do banco de dados
+    Message.find().sort({ time: 1 }).limit(50).then(messages => {
+      messages.forEach(msg => {
+        socket.emit("message", {
+          username: msg.username,
+          message: msg.message
+        });
       });
-      connectedUsers.push(data.username);
-      io.emit("user-joined", {
-        users: connectedUsers,
-      });
+    }).then(() => {
+      console.log("Mensagens recuperadas do banco de dados e enviadas ao cliente");
+    }).catch(err => {
+      console.error("Erro ao buscar mensagens:", err);
     });
 
     socket.on("message", msg => {
@@ -176,23 +179,8 @@ function setupServer(httpServer) {
     socket.on("disconnect", () => {
       const username = connectedUsers.find(user => user.socketId === socket.id)?.username;
       if (username) {
-        connectedUsers = connectedUsers.filter(user => user.socketId !== socket.id);
-        console.log(`🔴 Usuário desconectado: ${username}`);
-      }
-    });
-
-    socket.on("typing", data => {
-      if (data.isTyping) {
-        console.log(`${data.username} está digitando...`);
-        socket.broadcast.emit("typing", {
-          username: data.username,
-          isTyping: true
-        });
-      } else {
-        socket.broadcast.emit("typing", {
-          username: data.username,
-          isTyping: false
-        });
+        connectedUsers.delete(socket.id);
+        console.log(`🔴 ${username} desconectado`);
       }
     });
   });
