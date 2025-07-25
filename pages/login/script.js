@@ -1,20 +1,11 @@
-function redirectIfNotLogged() {
-    fetch('/user')
-        .then(response => {
-            if (response.status === 401) {
-                window.location.href = '../signup/main.html';
-            }
-        });
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('signup-form');
+    const form = document.getElementById('login-form');
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
         try {
-            const response = await fetch('/signup', {
+            const response = await fetch('/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -23,7 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const result = await response.json();
             if (response.ok) {
-                window.location.href = '../login/main.html';
+                alert(result);
+                // Redirecionar para página principal após login
+                window.location.href = '../home/main.html';
             } else {
                 alert(result);
             }
@@ -32,4 +25,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-

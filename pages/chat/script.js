@@ -1,4 +1,27 @@
-document.addEventListener('DOMContentLoaded', function() {
+function redirectIfNotLogged() {
+    fetch('/user')
+        .then(response => {
+            if (response.status === 401) {
+                window.location.href = '../signup/main.html';
+            }
+        });
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // Tenta obter usuário logado, se não, usa 'Usuário' como padrão
+    let username = 'Usuário';
+    try {
+        const response = await fetch('/user');
+        if (response.ok) {
+            const user = await response.json();
+            if (user && user.username) {
+                username = user.username;
+            }
+        }
+    } catch (error) {
+        // Ignora erro, mantém 'Usuário' como padrão
+    }
+
     const socket = io();
     const messagesBox = document.getElementById('messages-box');
     const messageInput = document.getElementById('message-input');
@@ -6,23 +29,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const typingIndicator = document.getElementById('typing-indicator');
     const currentUsernameElement = document.getElementById('current-username');
     const statusElement = document.getElementById('status');
-    
+
     // Variável para controlar timeout de digitação
     let typingTimeout;
-    
-    // Solicitar nome do usuário
-    let username = prompt("Digite seu nome:");
-    while (!username || username.trim() === "") {
-        username = prompt("Por favor, digite um nome válido:");
-    }
-    username = username.trim();
-    
+
     // Mostrar nome do usuário no topo
     currentUsernameElement.textContent = username;
-    
+
     // Registrar usuário no servidor
     socket.emit("user-join", { username });
-    
+
     // Atualizar status da conexão
     socket.on('connect', () => {
         statusElement.textContent = 'Conectado';
@@ -45,7 +61,8 @@ document.addEventListener('DOMContentLoaded', function() {
             systemMsg.className = 'system-msg';
             systemMsg.textContent = `👤 ${data.message}`;
             messagesBox.appendChild(systemMsg);
-        } else {
+
+        }else {
             // Determina se a mensagem é do usuário atual ou de outro
             const isCurrentUser = data.username === username;
             messageContainer.className = isCurrentUser ? 'message-container sent' : 'message-container received';
@@ -71,7 +88,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Enviar mensagem
-    function sendMessage() {
+    async function sendMessage() {
+        // Verifica autenticação antes de enviar mensagem
+        try {
+            const response = await fetch('/user');
+            if (response.status === 401) {
+                window.location.href = '../signup/main.html';
+                return;
+            }
+        } catch (error) {
+            window.location.href = '../signup/main.html';
+            return;
+        }
         const message = messageInput.value.trim();
         if (message) {
             socket.emit("message", {
@@ -79,7 +107,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 message: message
             });
             messageInput.value = "";
-            
             // Notificar que parou de digitar
             socket.emit('typing', false);
         }
