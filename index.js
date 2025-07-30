@@ -8,7 +8,7 @@ import path from "path";
 import { dirname } from 'path';
 dotenv.config();
 import {routes} from './routes.js';
-import { User, Mensage } from './database.js';
+import { User, Message} from './database.js';
 import { setupServer } from "./server.js";
 import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -31,5 +31,8 @@ app.use(session({
 
 app.use('/pages', express.static(path.join(__dirname, 'pages'))); // Servir as páginas estáticas
 //app.use('/public', express.static(path.join(__dirname, 'public'))); // Servir os arquivos públicos
+app.get("/", (req, res) => {
+  res.redirect("/pages/home/main.html");
+});
 routes(app);
 setupServer(httpServer);

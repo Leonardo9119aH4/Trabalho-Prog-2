@@ -1,14 +1,15 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { answerUser } from "./scriptGemini.js";
+import { User, Message } from './database.js';
 import { connect } from "http2";
+
 
 function setupServer(httpServer) {
   const io = new Server(httpServer);
 
   // Armazenar usuários conectados
   let connectedUsers = []; // socket.id -> username
-
 
   const processCommand = async (socket, username, message) => {
     const args = message.slice(1).split(' ');
@@ -23,7 +24,8 @@ function setupServer(httpServer) {
                    "• `/users` - Lista usuários online\n" +
                    "• `/time` - Mostra horário atual\n" +
                    "• `/clear` - Limpa seu chat\n" +
-                   "• `/ia [mensagem]` - Conversa com a IA"
+                   "• `/ia [mensagem]` - Conversa com a IA" +
+                   "• `/tell [usuário] [mensagem]` - Envia uma mensagem privada para outro usuário\n"
         });
         break;
         
@@ -61,7 +63,6 @@ function setupServer(httpServer) {
           });
           return;
         }
-        
         try {
           socket.emit("message", {
             username: 'Sistema',
@@ -82,7 +83,35 @@ function setupServer(httpServer) {
           });
         }
         break;
-      
+      case 'tell':
+        if (args.length < 3) {
+          socket.emit("message", {
+            username: 'Sistema',
+            message: "❌ Uso incorreto do comando /tell. Exemplo: `/tell usuário mensagem`"
+          });
+          return;
+        }
+        const targetUsername = args[1];
+        const messageToSend = args.slice(2).join(' ');
+        // pega o id do socket do usuário alvo
+        const targetSocketId = Array.from(connectedUsers.entries()).find(([_, user]) => user === targetUsername)?.[0];
+        if (!targetSocketId) {
+          socket.emit("message", {
+            username: 'Sistema',
+            message: `❌ Usuário ${targetUsername} não está online ou não existe.`
+          });
+          return;
+        }
+        io.to(targetSocketId).emit("message", {
+          username: username + " (privado)",
+          message: `(privado): ${messageToSend}`
+        });
+        socket.emit("message", {
+          username: 'Sistema',
+          message: `✅ Mensagem enviada para ${targetUsername}: ${messageToSend}`
+        });
+        break;
+        
       default:
         socket.emit("message", {
           username: 'Sistema',
@@ -106,6 +135,20 @@ function setupServer(httpServer) {
       });
     });
 
+    // Enviar mensagens salvas do banco de dados
+    Message.find().sort({ time: 1 }).limit(50).then(messages => {
+      messages.forEach(msg => {
+        socket.emit("message", {
+          username: msg.username,
+          message: msg.message
+        });
+      });
+    }).then(() => {
+      console.log("Mensagens recuperadas do banco de dados e enviadas ao cliente");
+    }).catch(err => {
+      console.error("Erro ao buscar mensagens:", err);
+    });
+
     socket.on("message", msg => {
 
       if (msg.message.startsWith('/')){
@@ -125,8 +168,26 @@ function setupServer(httpServer) {
         username: msg.username,
         message: msg.message
       });
+
+      // Incrementar o contador de mensagens enviadas
+      User.findOneAndUpdate(
+        { username: msg.username },
+        { $inc: { messagesSent: 1 } },
+        { new: true }
+      ).catch(err => {
+        console.error("Erro ao atualizar mensagens enviadas:", err);
+      });
+
+      // Salvar a mensagem no banco de dados
+      const message = new Message({
+        username: msg.username,
+        message: msg.message
+      });
+      message.save().catch(err => {
+        console.error("Erro ao salvar mensagem:", err);
+      });
     });
-    
+
     socket.on("disconnect", () => {
       const username = connectedUsers.find(user => user.socketId === socket.id)?.username;
       if (username) {

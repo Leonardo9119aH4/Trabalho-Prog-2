@@ -4,16 +4,16 @@ import { Schema } from "mongoose";
 const userSchema = new Schema({
     username: String,
     password: String,
-    isAdmin: { type: Boolean, default: false },
-    isBaned: { type: Boolean, default: false }
+    whenCreated: { type: Date, default: Date.now },
+    messagesSent: { type: Number, default: 0 },
 });
 const User = mongoose.model('User', userSchema);
 
-const mensageSchema = new Schema({
+const messageSchema = new Schema({
     username: String,
     message: String,
     time: { type: Date, default: Date.now }
 });
-const Mensage = mongoose.model('Mensage', mensageSchema);
+const Message = mongoose.model('Message', messageSchema);
 
-export { User, Mensage };
+export { User, Message as Message };
