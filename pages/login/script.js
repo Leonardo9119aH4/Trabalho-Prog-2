@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok) {
                 alert(result);
                 // Redirecionar para página principal após login
-                window.location.href = '../home/main.html';
+                window.location.href = '../chat/main.html';
             } else {
                 alert(result);
             }

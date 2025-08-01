@@ -8,7 +8,7 @@ function setupServer(httpServer) {
   const io = new Server(httpServer);
 
   // Armazenar usuários conectados
-  let connectedUsers = []; // socket.id -> username
+  let connectedUsers = new Map(); // socket.id -> username
 
   const processCommand = async (socket, username, message) => {
     const args = message.slice(1).split(' ');
@@ -188,7 +188,7 @@ function setupServer(httpServer) {
     });
 
     socket.on("disconnect", () => {
-      const username = connectedUsers.find(user => user.socketId === socket.id)?.username;
+      const username = connectedUsers.has(user => user.socketId === socket.id)?.username;
       if (username) {
         connectedUsers = connectedUsers.filter(user => user.socketId !== socket.id);
         console.log(`🔴 Usuário desconectado: ${username}`);
