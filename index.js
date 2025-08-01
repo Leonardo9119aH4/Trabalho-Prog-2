@@ -20,7 +20,7 @@ httpServer.listen(3000, "0.0.0.0", () => {
     console.log(`✅ Servidor no ar: http://localhost:3000`);
 });
 
-mongoose.connect('mongodb://localhost', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect('mongodb://localhost:27017/programacao', { useNewUrlParser: true, useUnifiedTopology: true });
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({

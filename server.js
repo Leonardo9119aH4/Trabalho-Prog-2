@@ -9,7 +9,7 @@ function setupServer(httpServer) {
   const io = new Server(httpServer);
 
   // Armazenar usuários conectados
-  let connectedUsers = new Map; // socket.id -> username
+  let connectedUsers = new Map(); // socket.id -> username
 
   const processCommand = async (socket, username, message) => {
     const args = message.slice(1).split(' ');
