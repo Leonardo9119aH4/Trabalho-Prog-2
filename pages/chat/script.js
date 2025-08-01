@@ -149,13 +149,13 @@ async function sla() {
         messagesBox.scrollTop = messagesBox.scrollHeight;
     });
 
-    socket.on('user-joined', users => {
+    socket.on('user-joined', usersPackage => {
         // Atualizar lista de usuários conectados
         userListElement.innerHTML = ''; // Limpar lista atual
-        console.log(users)
-        Object.entries(users.users).forEach((socketId, username) => {
+        console.log(usersPackage)
+        Object.values(JSON.parse(usersPackage)).forEach(userName => {
             const userItem = document.createElement('li');
-            userItem.textContent = username;
+            userItem.textContent = userName;
             userListElement.appendChild(userItem);
         });
     })
