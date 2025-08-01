@@ -129,7 +129,6 @@ function setupServer(httpServer) {
         username: 'Sistema',
         message: `👋 ${data.username} entrou no chat!`
       });
-      connectedUsers.push(data.username);
       io.emit("user-joined", {
         users: connectedUsers,
       });
