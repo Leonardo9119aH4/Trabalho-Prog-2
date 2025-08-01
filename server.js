@@ -3,9 +3,14 @@ import { Server } from "socket.io";
 import { answerUser } from "./scriptGemini.js";
 import { connect } from "http2";
 import { User, Message } from './database.js';
+import session from "express-session";
 
-function setupServer(httpServer) {
+function setupServer(httpServer, sessionMiddleware) {
   const io = new Server(httpServer);
+  //Disponibiliza a sessão para o socket
+  io.use((socket, next)=>{
+    sessionMiddleware(socket.request, {}, next);
+  });
 
   // Armazenar usuários conectados
   let connectedUsers = new Map(); // socket.id -> username
@@ -148,7 +153,10 @@ function setupServer(httpServer) {
     });
 
     socket.on("message", msg => {
-
+      if (!socket.request.session || !socket.request.session.user) { // Verfifica se o usuário está logado
+        socket.emit("unauthorized");
+        return;
+      }
       if (msg.message.startsWith('/')){
         processCommand(socket, msg.username, msg.message);
         return;

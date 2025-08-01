@@ -6,9 +6,10 @@ import { User } from './database.js';
 // Middleware para verificar se o usuário está autenticado
 async function requireLogin(req, res, next) {
     if(req.session && req.session.user){
-        const user = await User.findById(req.session.id);
+        const user = await User.findById(req.session.user._id);
         if (user) {
-           next(); 
+           next();
+           return;
         }
         res.status(401).json('Usuário não existe');
         return;

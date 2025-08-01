@@ -15,6 +15,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const httpServer = createServer(app);
+const sessionMiddleware = session({
+  secret: "abc",
+  resave: false,
+  saveUninitialized: true
+});
 
 httpServer.listen(3000, "0.0.0.0", () => {
     console.log(`✅ Servidor no ar: http://localhost:3000`);
@@ -23,11 +28,7 @@ httpServer.listen(3000, "0.0.0.0", () => {
 mongoose.connect('mongodb://localhost:27017/programacao', { useNewUrlParser: true, useUnifiedTopology: true });
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(session({
-  secret: "abc",
-  resave: false,
-  saveUninitialized: true
-}));
+app.use(sessionMiddleware);
 
 app.use('/pages', express.static(path.join(__dirname, 'pages'))); // Servir as páginas estáticas
 //app.use('/public', express.static(path.join(__dirname, 'public'))); // Servir os arquivos públicos
@@ -35,4 +36,4 @@ app.get("/", (req, res) => {
   res.redirect("/pages/home/main.html");
 });
 routes(app);
-setupServer(httpServer);
+setupServer(httpServer, sessionMiddleware);
