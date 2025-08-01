@@ -1,9 +1,8 @@
 import { createServer } from "http";
 import { Server } from "socket.io";
 import { answerUser } from "./scriptGemini.js";
-import { User, Message } from './database.js';
 import { connect } from "http2";
-
+import { User, Message } from './database.js';
 
 function setupServer(httpServer) {
   const io = new Server(httpServer);

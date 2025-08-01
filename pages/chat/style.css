@@ -87,3 +87,35 @@
     border-radius: 50%;
     display: inline-block;
 }
+
+/* Profile Section */
+
+.profileArea {
+    position: absolute;
+    margin-left: 2em;
+    width: 20%;
+}
+
+.profileTitle {
+    background-color: #0d6efd;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+    border-radius: 8px 8px 0 0;
+    font-size: 1.2em;
+}
+
+.profileStats {
+    border-left: 1px solid #ddd;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    list-style: none;
+    padding: 10px;
+    margin: 0;
+    align-items: right;
+}
+
+.stat {
+    padding: 4px;
+}

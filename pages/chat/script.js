@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     currentUsernameElement.textContent = username;
 
     // Registrar usuário no servidor
-    socket.emit("user-join", { username });
+    socket.emit("connection", { username });
     
     // Atualizar status da conexão
     socket.on('connect', () => {
