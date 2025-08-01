@@ -1,3 +1,5 @@
+const socket = io();
+
 function redirectIfNotLogged() {
     fetch('/user')
         .then(response => {
@@ -7,22 +9,24 @@ function redirectIfNotLogged() {
         });
 }
 
-document.addEventListener('DOMContentLoaded', async function() {
+async function sla() {
     // Tenta obter usuário logado, se não, usa 'Usuário' como padrão
     let username = 'Usuário';
     try {
         const response = await fetch('/user');
+        console.log("achou")
         if (response.ok) {
             const user = await response.json();
             if (user && user.username) {
                 username = user.username;
+                socket.emit("connection", { username });
             }
         }
     } catch (error) {
         // Ignora erro, mantém 'Usuário' como padrão
     }
 
-    const socket = io();
+
     const messagesBox = document.getElementById('messages-box');
     const messageInput = document.getElementById('message-input');
     const sendButton = document.getElementById('send-button');
@@ -36,9 +40,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // Mostrar nome do usuário no topo
     currentUsernameElement.textContent = username;
-
-    // Registrar usuário no servidor
-    socket.emit("connection", { username });
     
     // Atualizar status da conexão
     socket.on('connect', () => {
@@ -89,7 +90,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     // Enviar mensagem
-    async function sendMessage() {
+    async function sendMessage() { 
         // Verifica autenticação antes de enviar mensagem
         try {
             const response = await fetch('/user');
@@ -151,11 +152,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     socket.on('user-joined', users => {
         // Atualizar lista de usuários conectados
         userListElement.innerHTML = ''; // Limpar lista atual
-        console.log(users.connectedUsers)
-        users.connectedUsers.forEach((username) => {
+        console.log(users)
+        Object.entries(users.users).forEach((socketId, username) => {
             const userItem = document.createElement('li');
             userItem.textContent = username;
             userListElement.appendChild(userItem);
         });
     })
-});
+}
+sla()
