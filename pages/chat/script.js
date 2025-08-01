@@ -149,9 +149,10 @@ async function sla() {
         messagesBox.scrollTop = messagesBox.scrollHeight;
     });
 
-    socket.on('user-joined', users => {
+    socket.on('user-joined', usersPackage => {
         // Atualizar lista de usuários conectados
         userListElement.innerHTML = ''; // Limpar lista atual
+        let { users } = usersPackage;
         console.log(users)
         Object.entries(users.users).forEach((socketId, username) => {
             const userItem = document.createElement('li');
