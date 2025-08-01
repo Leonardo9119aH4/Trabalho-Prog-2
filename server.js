@@ -133,9 +133,9 @@ function setupServer(httpServer, sessionMiddleware) {
         username: 'Sistema',
         message: `👋 ${data.username} entrou no chat!`
       });
-      io.emit("user-joined", {
-        users: connectedUsers,
-      });
+      connectedUsers.set(socket.id, data.username);
+      console.log(connectedUsers)
+      io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
     });
 
     // Enviar mensagens salvas do banco de dados
