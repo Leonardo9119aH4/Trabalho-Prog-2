@@ -2,13 +2,13 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import { answerUser } from "./scriptGemini.js";
 import { connect } from "http2";
+import { User, Message } from './database.js';
 
 function setupServer(httpServer) {
   const io = new Server(httpServer);
 
   // Armazenar usuários conectados
   let connectedUsers = []; // socket.id -> username
-
 
   const processCommand = async (socket, username, message) => {
     const args = message.slice(1).split(' ');
@@ -132,6 +132,20 @@ function setupServer(httpServer) {
       io.emit("user-joined", {
         users: connectedUsers,
       });
+    });
+
+    // Enviar mensagens salvas do banco de dados
+    Message.find().sort({ time: 1 }).limit(50).then(messages => {
+      messages.forEach(msg => {
+        socket.emit("message", {
+          username: msg.username,
+          message: msg.message
+        });
+      });
+    }).then(() => {
+      console.log("Mensagens recuperadas do banco de dados e enviadas ao cliente");
+    }).catch(err => {
+      console.error("Erro ao buscar mensagens:", err);
     });
 
     socket.on("message", msg => {
