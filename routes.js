@@ -4,12 +4,17 @@ import session from "express-session";
 import { User } from './database.js';
 
 // Middleware para verificar se o usuário está autenticado
-function requireLogin(req, res, next) {
-    if (req.session && req.session.user) {
-        next();
-    } else {
-        res.status(401).json('Usuário não autenticado');
+async function requireLogin(req, res, next) {
+    if(req.session && req.session.user){
+        const user = await User.findById(req.session.id);
+        if (user) {
+           next(); 
+        }
+        res.status(401).json('Usuário não existe');
+        return;
     }
+    res.status(401).json("Usuário não autenticado");
+    return;
 }
 
 function routes(app){
@@ -17,7 +22,8 @@ function routes(app){
         const { username, password } = req.body;
         const userExists = await User.findOne({ username });
             if (userExists) {
-                return res.status(400).json('Usuário já existe');
+                res.status(400).json('Usuário já existe');
+                return;
             }
         const user = new User({ username, password });
         await user.save();
@@ -36,7 +42,7 @@ function routes(app){
         }
     });
 
-    app.get('/logout', (req, res) => {
+    app.get('/logout', async (req, res) => {
         req.session.destroy(err => {
             if (err) {
                 return res.status(500).json('Erro ao fazer logout');
@@ -45,51 +51,8 @@ function routes(app){
         });
     });
 
-    app.get('/user', requireLogin, (req, res) => {
+    app.get('/user', requireLogin, async (req, res) => {
         res.status(200).json(req.session.user);
-    });
-
-    app.get('/admin', requireLogin, (req, res) => {
-        if (req.session.user.isAdmin) {
-            res.status(200).json('Bem-vindo ao painel de administração');
-        } else {
-            res.status(403).json('Acesso negado');
-        }
-    });
-
-    app.post('/ban', requireLogin, async (req, res) => {
-        if (!req.session.user.isAdmin) {
-            return res.status(403).json('Acesso negado');
-        }
-        const { username } = req.body;
-        const user = await User.findOne({ username });
-        if (user) {
-            user.isBaned = true;
-            await user.save();
-            res.status(200).json('Usuário banido com sucesso');
-        } else {
-            res.status(404).json('Usuário não encontrado');
-        }
-    });
-
-    app.post('/unban', requireLogin, async (req, res) => {
-        if (!req.session.user.isAdmin) {
-            return res.status(403).json('Acesso negado');
-        }
-        const { username } = req.body;
-        const user = await User.findOne({ username });
-        if (user) {
-            user.isBaned = false;
-            await user.save();
-            res.status(200).json('Usuário desbanido com sucesso');
-        } else {
-            res.status(404).json('Usuário não encontrado');
-        }
-    });
-
-    app.get('/session-id', async (req, res) => {
-        const user = await User.findOne({ id: sessionId });
-        res.json({ user: username });
     });
 }
 
