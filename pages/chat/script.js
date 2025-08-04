@@ -161,3 +161,22 @@ async function sla() {
     })
 }
 sla()
+
+/* ----------------------------- PROFILE ------------------ */
+
+const profileName = document.querySelector("#profileName");
+const profileNumberMessages = document.querySelector("#profileNumberMessages");
+const profileHours = document.querySelector("#profileHours");
+
+try {
+    const response = await fetch('/user');
+    if (response.status === 200) {
+        const user = await response.json();
+        profileName.innerText = "Nome do Usuário: " + user.username;
+        profileNumberMessages.innerText = "Mensagens Enviadas: " + user.messagesSent;
+        profileHours.innerText = "Criação do Usuário " + user.whenCreated;
+    }
+} catch (error) {
+    console.log("Erro ao encontrar os dados do usuário")
+    return;
+}
