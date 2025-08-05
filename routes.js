@@ -2,6 +2,7 @@
 import express from "express";
 import session from "express-session";
 import { User } from './database.js';
+import req from "express/lib/request.js";
 
 // Middleware para verificar se o usuário está autenticado
 async function requireLogin(req, res, next) {
@@ -54,6 +55,18 @@ function routes(app){
 
     app.get('/user', requireLogin, async (req, res) => {
         res.status(200).json(req.session.user);
+    });
+
+    app.get('/userStats', requireLogin, async (req, res) => {
+        try{
+            const user = await User.findById(req.session.user._id);
+            const userName = user.username;
+            const userMessagesSent = user.messagesSent;
+            const userWhenCreated = user.whenCreated;
+            res.status(200).json( userName, userMessagesSent, userWhenCreated );
+        } catch {
+            return res.status(400).json ("Informações do usuário não foram encontradas.");
+        }
     });
 }
 
