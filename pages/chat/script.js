@@ -169,7 +169,7 @@ const profileMessagesSent = document.querySelector("#profilMessagesSent");
 const profileWhenCreated = document.querySelector("#profileWhenCreated");
 
 try {
-    const response = await fetch('/user');
+    const response = await fetch('/userStats');
     if (response.status === 200) {
         const user = await response.json();
         profileName.innerText = "Nome do Usuário: " + user.username;
