@@ -14,6 +14,7 @@ function setupServer(httpServer, sessionMiddleware) {
 
   // Armazenar usuários conectados
   let connectedUsers = new Map(); // socket.id -> username
+  let typingUsers = new Map(); // username -> isTyping
 
   const processCommand = async (socket, username, message) => {
     const args = message.slice(1).split(' ');
@@ -133,7 +134,9 @@ function setupServer(httpServer, sessionMiddleware) {
         username: 'Sistema',
         message: `👋 ${data.username} entrou no chat!`
       });
+      if(connectedUsers.has(socket.id)) return; // Evita adicionar o mesmo usuário várias vezes
       connectedUsers.set(socket.id, data.username);
+      typingUsers.set(data.username, false);
       console.log(connectedUsers)
       io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
     });
@@ -195,26 +198,23 @@ function setupServer(httpServer, sessionMiddleware) {
     });
 
     socket.on("disconnect", () => {
-      const username = connectedUsers.has(user => user.socketId === socket.id)?.username;
+      const username = connectedUsers.get(socket.id);
       if (username) {
-        connectedUsers = connectedUsers.filter(user => user.socketId !== socket.id);
         console.log(`🔴 Usuário desconectado: ${username}`);
+        io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
+        io.emit("message", {
+          username: 'Sistema',
+          message: `👋 ${username} saiu do chat!`
+        });
+        connectedUsers.delete(socket.id);
+        typingUsers.delete(username);
       }
     });
 
     socket.on("typing", data => {
-      if (data.isTyping) {
-        console.log(`${data.username} está digitando...`);
-        socket.broadcast.emit("typing", {
-          username: data.username,
-          isTyping: true
-        });
-      } else {
-        socket.broadcast.emit("typing", {
-          username: data.username,
-          isTyping: false
-        });
-      }
+      typingUsers.set(connectedUsers.get(socket.id), data.isTyping);
+      console.log(typingUsers.keys())
+      socket.broadcast.emit("typing", JSON.stringify([...typingUsers.keys()]));
     });
   });
 };

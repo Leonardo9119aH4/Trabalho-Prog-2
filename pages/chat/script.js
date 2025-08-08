@@ -140,12 +140,17 @@ async function sla() {
     
     // Receber notificação de digitação
     socket.on('typing', (data) => {
-        if (data.isTyping && data.username !== username) {
-            typingIndicator.textContent = `${data.username} está digitando...`;
-            typingIndicator.style.display = 'block';
-        } else {
-            typingIndicator.style.display = 'none';
-        }
+        data = JSON.parse(data);
+        typingIndicator.textContent = `${(() => {
+            console.log(data)
+            let typingUsers = []
+            data.forEach(user => {
+                typingUsers.push(user)
+            })
+            typingUsers.join(', ')
+            return typingUsers
+        })()} está digitando...`;
+        typingIndicator.style.display = 'block';
         messagesBox.scrollTop = messagesBox.scrollHeight;
     });
 
