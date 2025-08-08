@@ -9,6 +9,8 @@ function redirectIfNotLogged() {
         });
 }
 
+
+
 async function sla() {
     // Tenta obter usuário logado, se não, usa 'Usuário' como padrão
     let username = 'Usuário';
@@ -111,7 +113,9 @@ async function sla() {
             messageInput.value = "";
             // Notificar que parou de digitar
             socket.emit('typing', false);
+            carregarPerfil();
         }
+
     }
     
     // Detectar quando o usuário está digitando
@@ -165,21 +169,24 @@ sla()
 /* ----------------------------- PROFILE ------------------ */
 
 const profileName = document.querySelector("#profileName");
-const profileMessagesSent = document.querySelector("#profilMessagesSent");
+const profileMessagesSent = document.querySelector("#profileMessagesSent");
 const profileWhenCreated = document.querySelector("#profileWhenCreated");
 
 async function carregarPerfil(){
     try {
         const response = await fetch('/userStats');
+        console.log('response: ', response);
         if (response.status === 200) {
             const user = await response.json();
-            profileName.innerText = "Nome do Usuário: " + user.username;
-            profileMessagesSent.innerText = "Mensagens Enviadas: " + user.messagesSent;
-            profileWhenCreated.innerText = "Criação do Usuário " + user.whenCreated;
+            profileName.innerText = "Nome do Usuário: " + user.userName;
+            profileMessagesSent.innerText = "Mensagens Enviadas: " + (user.userMessagesSent ?? 0);
+            profileWhenCreated.innerText = "Criação do Usuário: " + new Date(user.userWhenCreated).toLocaleDateString('pt-BR');
+            console.log('data: ', user.userWhenCreated);
         }
     } catch (error) {
         console.log("Erro ao encontrar os dados do usuário")
         return;
     }
 }
-setTimeout(carregarPerfil, 3000);
+
+carregarPerfil();

@@ -63,6 +63,7 @@ function routes(app){
         if (!user) {
             return res.status(400).json("Informações do usuário não foram encontradas.");
         }
+        
         res.status(200).json({
             userName: user.username,
             userMessagesSent: user.messagesSent || 0,

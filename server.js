@@ -142,7 +142,7 @@ function setupServer(httpServer, sessionMiddleware) {
         console.error("Erro ao salvar mensagem:", err);
       });
       connectedUsers.set(socket.id, data.username);
-      console.log(connectedUsers)
+      console.log('connectedUsers:', connectedUsers);
       io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
     });
 
