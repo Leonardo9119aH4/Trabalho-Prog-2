@@ -168,15 +168,18 @@ const profileName = document.querySelector("#profileName");
 const profileMessagesSent = document.querySelector("#profilMessagesSent");
 const profileWhenCreated = document.querySelector("#profileWhenCreated");
 
-try {
-    const response = await fetch('/userStats');
-    if (response.status === 200) {
-        const user = await response.json();
-        profileName.innerText = "Nome do Usuário: " + user.username;
-        profileMessagesSent.innerText = "Mensagens Enviadas: " + user.messagesSent;
-        profileWhenCreated.innerText = "Criação do Usuário " + user.whenCreated;
+async function carregarPerfil(){
+    try {
+        const response = await fetch('/userStats');
+        if (response.status === 200) {
+            const user = await response.json();
+            profileName.innerText = "Nome do Usuário: " + user.username;
+            profileMessagesSent.innerText = "Mensagens Enviadas: " + user.messagesSent;
+            profileWhenCreated.innerText = "Criação do Usuário " + user.whenCreated;
+        }
+    } catch (error) {
+        console.log("Erro ao encontrar os dados do usuário")
+        return;
     }
-} catch (error) {
-    console.log("Erro ao encontrar os dados do usuário")
-    return;
 }
+setTimeout(carregarPerfil, 3000);
