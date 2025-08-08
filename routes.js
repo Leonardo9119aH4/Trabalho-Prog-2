@@ -58,16 +58,20 @@ function routes(app){
     });
 
     app.get('/userStats', requireLogin, async (req, res) => {
-        try{
-            const user = await User.findById(req.session.user._id);
-            const userName = user.username;
-            const userMessagesSent = user.messagesSent;
-            const userWhenCreated = user.whenCreated;
-            res.status(200).json( userName, userMessagesSent, userWhenCreated );
-        } catch {
-            return res.status(400).json ("Informações do usuário não foram encontradas.");
+    try {
+        const user = await User.findById(req.session.user._id);
+        if (!user) {
+            return res.status(400).json("Informações do usuário não foram encontradas.");
         }
-    });
+        res.status(200).json({
+            userName: user.username,
+            userMessagesSent: user.messagesSent || 0,
+            userWhenCreated: user.whenCreated
+        });
+    } catch {
+        return res.status(400).json("Informações do usuário não foram encontradas.");
+    }
+});
 }
 
 export { routes };
