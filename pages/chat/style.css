@@ -119,3 +119,7 @@
 .stat {
     padding: 4px;
 }
+
+.list-group {
+    padding-left: 2rem;
+}

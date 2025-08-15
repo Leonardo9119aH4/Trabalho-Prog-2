@@ -156,11 +156,13 @@ async function sla() {
     socket.on('user-joined', usersPackage => {
         // Atualizar lista de usuários conectados
         userListElement.innerHTML = ''; // Limpar lista atual
-        console.log(usersPackage)
-        Object.values(JSON.parse(usersPackage)).forEach(userName => {
-            const userItem = document.createElement('li');
-            userItem.textContent = userName;
-            userListElement.appendChild(userItem);
+        const usersObj = JSON.parse(usersPackage || '{}');
+        const unique = Array.from(new Set(Object.values(usersObj)));
+        unique.forEach(userName => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.textContent = `. ${userName}`; // mantém o ponto antes do nome
+            userListElement.appendChild(li);
         });
     })
 }
@@ -188,5 +190,10 @@ async function carregarPerfil(){
         return;
     }
 }
+
+// Desconecta explicitamente ao sair/recarregar (ajuda a liberar o socket antigo)
+window.addEventListener('beforeunload', () => {
+    try { socket.disconnect(); } catch {}
+});
 
 carregarPerfil();
