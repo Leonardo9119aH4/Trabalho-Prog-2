@@ -65,12 +65,21 @@
     font-size: 0.9em;
 }
 
+.father-message {
+    display: grid;
+    grid-template-rows: 1fr, 1fr;
+    height: 5rem;
+}
+
 .typing-indicator {
-    font-size: 0.8em;
+    --padding-rl: 5px;
+    --padding-tb: 15px;
+    font-size: 0.8rem;
+    height: 1.75rem;
     color: #6c757d;
     font-style: italic;
-    padding: 5px 15px;
-    display: none;
+    padding: var(--padding-rl) var(--padding-tb);
+    display: block;
 }
 
 .user-status {
