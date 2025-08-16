@@ -9,6 +9,7 @@ fetch('/user')
 
 
 const form = document.getElementById('signup-form');
+const successOverlay = document.getElementById('signup-success');
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('username').value;
@@ -23,7 +24,16 @@ form.addEventListener('submit', async (e) => {
         });
         const result = await response.json();
         if (response.ok) {
-            window.location.href = '../login/main.html';
+            // Mostra animação de sucesso e redireciona para login
+            if (successOverlay) {
+                successOverlay.classList.add('show');
+                successOverlay.setAttribute('aria-hidden', 'false');
+                setTimeout(() => {
+                    window.location.href = '../login/main.html?reason=signup-success';
+                }, 1700);
+            } else {
+                window.location.href = '../login/main.html?reason=signup-success';
+            }
         } else {
             alert(result);
         }
@@ -31,3 +41,14 @@ form.addEventListener('submit', async (e) => {
         alert('Erro ao conectar com o servidor.');
     }
 });
+
+// Se já autenticado, evita exibir cadastro e redireciona
+(async function preventSignupIfAuthenticated(){
+    try{
+        const res = await fetch('/session');
+        const data = await res.json();
+        if(data && data.authenticated){
+            window.location.replace('../home/main.html');
+        }
+    }catch{}
+})();

@@ -4,7 +4,7 @@ function redirectIfNotLogged() {
     fetch('/user')
         .then(response => {
             if (response.status === 401) {
-                window.location.href = '../signup/main.html';
+                window.location.href = '../login/main.html?reason=send-message';
             }
         });
 }
@@ -97,11 +97,11 @@ async function sla() {
         try {
             const response = await fetch('/user');
             if (response.status === 401) {
-                window.location.href = '../signup/main.html';
+                window.location.href = '../login/main.html?reason=send-message';
                 return;
             }
         } catch (error) {
-            window.location.href = '../signup/main.html';
+            window.location.href = '../login/main.html?reason=send-message';
             return;
         }
         const message = messageInput.value.trim();
@@ -151,6 +151,11 @@ async function sla() {
             typingIndicator.style.display = 'none';
         }
         messagesBox.scrollTop = messagesBox.scrollHeight;
+    });
+
+    // Caso o servidor rejeite via socket por falta de sessão
+    socket.on('unauthorized', () => {
+        window.location.href = '../login/main.html?reason=send-message';
     });
 
     socket.on('user-joined', usersPackage => {
