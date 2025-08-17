@@ -1,42 +1,36 @@
+const messagesBox = document.getElementById('messages-box');
+const messageInput = document.getElementById('message-input');
+const sendButton = document.getElementById('send-button');
+const typingIndicator = document.getElementById('typing-indicator');
+const currentUsernameElement = document.getElementById('current-username');
+const statusElement = document.getElementById('status');
+const userListElement = document.getElementById('users-list');
 const socket = io();
+// Variável para controlar timeout de digitação
+let typingTimeout;
 
 function redirectIfNotLogged() {
     fetch('/user')
         .then(response => {
             if (response.status === 401) {
-                window.location.href = '../signup/main.html';
+                window.location.href = '../login/main.html?reason=send-message';
             }
         });
 }
 
-async function sla() {
+
+
+async function main() {
     // Tenta obter usuário logado, se não, usa 'Usuário' como padrão
     let username = 'Usuário';
-    try {
-        const response = await fetch('/user');
-        console.log("achou")
-        if (response.ok) {
-            const user = await response.json();
-            if (user && user.username) {
-                username = user.username;
-                socket.emit("connection", { username });
-            }
+    const response = await fetch('/user');
+    if (response.ok) {
+        const user = await response.json();
+        if (user && user.username) {
+            username = user.username;
+            socket.emit("connection", { username });
         }
-    } catch (error) {
-        // Ignora erro, mantém 'Usuário' como padrão
     }
-
-
-    const messagesBox = document.getElementById('messages-box');
-    const messageInput = document.getElementById('message-input');
-    const sendButton = document.getElementById('send-button');
-    const typingIndicator = document.getElementById('typing-indicator');
-    const currentUsernameElement = document.getElementById('current-username');
-    const statusElement = document.getElementById('status');
-    const userListElement = document.getElementById('users-list');
-    
-    // Variável para controlar timeout de digitação
-    let typingTimeout;
 
     // Mostrar nome do usuário no topo
     currentUsernameElement.textContent = username;
@@ -82,24 +76,25 @@ async function sla() {
             messageElement.className = 'message';
             messageElement.textContent = data.message;
             messageContainer.appendChild(messageElement);
-            
             messagesBox.appendChild(messageContainer);
         }
-        
         messagesBox.scrollTop = messagesBox.scrollHeight;
     }
     
     // Enviar mensagem
     async function sendMessage() { 
         // Verifica autenticação antes de enviar mensagem
+        const response = await fetch('/user');
+        if (response.status === 401) {
+            window.location.href = '../signup/main.html';
         try {
             const response = await fetch('/user');
             if (response.status === 401) {
-                window.location.href = '../signup/main.html';
+                window.location.href = '../login/main.html?reason=send-message';
                 return;
             }
         } catch (error) {
-            window.location.href = '../signup/main.html';
+            window.location.href = '../login/main.html?reason=send-message';
             return;
         }
         const message = messageInput.value.trim();
@@ -111,7 +106,9 @@ async function sla() {
             messageInput.value = "";
             // Notificar que parou de digitar
             socket.emit('typing', false);
+            carregarPerfil();
         }
+
     }
     
     // Detectar quando o usuário está digitando
@@ -133,31 +130,30 @@ async function sla() {
             sendMessage();
         }
     });
-    
+
     // Eventos do Socket.IO
     socket.on("message", data => appendMessage(data));
     socket.on("user-left", data => appendMessage(data, "system"));
     
     // Receber notificação de digitação
     socket.on('typing', (data) => {
-        data = JSON.parse(data);
-        typingIndicator.textContent = `${(() => {
-            console.log(data)
-            let typingUsers = []
-            data.forEach(user => {
-                typingUsers.push(user)
-            })
-            typingUsers.join(', ')
-            return typingUsers
-        })()} está digitando...`;
-        typingIndicator.style.display = 'block';
+        if (data.isTyping && data.username !== username) {
+            typingIndicator.textContent = `${data.username} está digitando...`;
+            typingIndicator.style.display = 'block';
+        } else {
+            typingIndicator.style.display = 'none';
+        }
         messagesBox.scrollTop = messagesBox.scrollHeight;
+    });
+
+    // Caso o servidor rejeite via socket por falta de sessão
+    socket.on('unauthorized', () => {
+        window.location.href = '../login/main.html?reason=send-message';
     });
 
     socket.on('user-joined', usersPackage => {
         // Atualizar lista de usuários conectados
         userListElement.innerHTML = ''; // Limpar lista atual
-        console.log(usersPackage)
         Object.values(JSON.parse(usersPackage)).forEach(userName => {
             const userItem = document.createElement('li');
             userItem.textContent = userName;
@@ -165,4 +161,30 @@ async function sla() {
         });
     })
 }
+main()
 sla()
+
+/* ----------------------------- PROFILE ------------------ */
+
+const profileName = document.querySelector("#profileName");
+const profileMessagesSent = document.querySelector("#profileMessagesSent");
+const profileWhenCreated = document.querySelector("#profileWhenCreated");
+
+async function carregarPerfil(){
+    try {
+        const response = await fetch('/userStats');
+        console.log('response: ', response);
+        if (response.status === 200) {
+            const user = await response.json();
+            profileName.innerText = "Nome do Usuário: " + user.userName;
+            profileMessagesSent.innerText = "Mensagens Enviadas: " + (user.userMessagesSent ?? 0);
+            profileWhenCreated.innerText = "Criação do Usuário: " + new Date(user.userWhenCreated).toLocaleDateString('pt-BR');
+            console.log('data: ', user.userWhenCreated);
+        }
+    } catch (error) {
+        console.log("Erro ao encontrar os dados do usuário")
+        return;
+    }
+}
+
+carregarPerfil();
