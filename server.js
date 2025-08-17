@@ -212,21 +212,9 @@ function setupServer(httpServer, sessionMiddleware) {
     });
 
     socket.on("typing", data => {
-      const username = connectedUsers.get(socket.id);
-      if (!username) return; // safety
-
-      // Se isTyping for true, marca como digitando; se false, remove da lista
-      if (data && data.isTyping) {
-        typingUsers.set(username, true);
-      } else {
-        typingUsers.delete(username);
-      }
-
-      // Lista apenas os usuários que estão realmente digitando (isTyping === true)
-      const typingNow = [...typingUsers.keys()];
-
-      console.log('Typing users:', typingNow);
-      socket.broadcast.emit("typing", JSON.stringify(typingNow));
+      typingUsers.set(connectedUsers.get(socket.id), data.isTyping);
+      console.log(typingUsers.keys())
+      socket.broadcast.emit("typing", JSON.stringify([...typingUsers.keys()]));
     });
   });
 };

@@ -109,31 +109,21 @@ async function sla() {
                 message: message
             });
             messageInput.value = "";
-            // Notificar que parou de digitar (envia objeto consistente)
-            socket.emit('typing', { username: username, isTyping: false });
+            // Notificar que parou de digitar
+            socket.emit('typing', false);
         }
     }
     
     // Detectar quando o usuário está digitando
     messageInput.addEventListener('input', () => {
-        // Notifica que está digitando
-        socket.emit('typing', { username: username, isTyping: true });
+        socket.emit('typing', {username: username, isTyping: true});
         console.log(`${username} está digitando...`);
-
-        // Resetar o timeout e notificar que parou de digitar após 500ms de inatividade
+        
+        // Resetar o timeout
         clearTimeout(typingTimeout);
         typingTimeout = setTimeout(() => {
-            socket.emit('typing', { username: username, isTyping: false });
+            socket.emit('typing', false);
         }, 500);
-    });
-
-    // Garantir que, ao fechar/recargar a página, o status de digitação seja limpo no servidor
-    window.addEventListener('beforeunload', () => {
-        try {
-            socket.emit('typing', { username: username, isTyping: false });
-        } catch (e) {
-            // ignore
-        }
     });
     
     // Event listeners
@@ -150,24 +140,17 @@ async function sla() {
     
     // Receber notificação de digitação
     socket.on('typing', (data) => {
-        let typingUsers = [];
-        try {
-            typingUsers = typeof data === 'string' ? JSON.parse(data) : data;
-            if (!Array.isArray(typingUsers)) typingUsers = [];
-        } catch (e) {
-            typingUsers = [];
-        }
-
-        // Se não houver ninguém digitando, esconder o indicador
-        if (typingUsers.length === 0) {
-            typingIndicator.textContent = '';
-            return;
-        }
-
-        // Formatar nomes e ajustar plural
-        const names = typingUsers.join(', ');
-        const verb = typingUsers.length > 1 ? 'estão' : 'está';
-        typingIndicator.textContent = `${names} ${verb} digitando...`;
+        data = JSON.parse(data);
+        typingIndicator.textContent = `${(() => {
+            console.log(data)
+            let typingUsers = []
+            data.forEach(user => {
+                typingUsers.push(user)
+            })
+            typingUsers.join(', ')
+            return typingUsers
+        })()} está digitando...`;
+        typingIndicator.style.display = 'block';
         messagesBox.scrollTop = messagesBox.scrollHeight;
     });
 
