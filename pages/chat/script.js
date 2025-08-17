@@ -1,4 +1,13 @@
+const messagesBox = document.getElementById('messages-box');
+const messageInput = document.getElementById('message-input');
+const sendButton = document.getElementById('send-button');
+const typingIndicator = document.getElementById('typing-indicator');
+const currentUsernameElement = document.getElementById('current-username');
+const statusElement = document.getElementById('status');
+const userListElement = document.getElementById('users-list');
 const socket = io();
+// Variável para controlar timeout de digitação
+let typingTimeout;
 
 function redirectIfNotLogged() {
     fetch('/user')
@@ -9,34 +18,17 @@ function redirectIfNotLogged() {
         });
 }
 
-async function sla() {
+async function main() {
     // Tenta obter usuário logado, se não, usa 'Usuário' como padrão
     let username = 'Usuário';
-    try {
-        const response = await fetch('/user');
-        console.log("achou")
-        if (response.ok) {
-            const user = await response.json();
-            if (user && user.username) {
-                username = user.username;
-                socket.emit("connection", { username });
-            }
+    const response = await fetch('/user');
+    if (response.ok) {
+        const user = await response.json();
+        if (user && user.username) {
+            username = user.username;
+            socket.emit("connection", { username });
         }
-    } catch (error) {
-        // Ignora erro, mantém 'Usuário' como padrão
     }
-
-
-    const messagesBox = document.getElementById('messages-box');
-    const messageInput = document.getElementById('message-input');
-    const sendButton = document.getElementById('send-button');
-    const typingIndicator = document.getElementById('typing-indicator');
-    const currentUsernameElement = document.getElementById('current-username');
-    const statusElement = document.getElementById('status');
-    const userListElement = document.getElementById('users-list');
-    
-    // Variável para controlar timeout de digitação
-    let typingTimeout;
 
     // Mostrar nome do usuário no topo
     currentUsernameElement.textContent = username;
@@ -82,23 +74,16 @@ async function sla() {
             messageElement.className = 'message';
             messageElement.textContent = data.message;
             messageContainer.appendChild(messageElement);
-            
             messagesBox.appendChild(messageContainer);
         }
-        
         messagesBox.scrollTop = messagesBox.scrollHeight;
     }
     
     // Enviar mensagem
     async function sendMessage() { 
         // Verifica autenticação antes de enviar mensagem
-        try {
-            const response = await fetch('/user');
-            if (response.status === 401) {
-                window.location.href = '../signup/main.html';
-                return;
-            }
-        } catch (error) {
+        const response = await fetch('/user');
+        if (response.status === 401) {
             window.location.href = '../signup/main.html';
             return;
         }
@@ -118,7 +103,6 @@ async function sla() {
     messageInput.addEventListener('input', () => {
         // Notifica que está digitando
         socket.emit('typing', { username: username, isTyping: true });
-        console.log(`${username} está digitando...`);
 
         // Resetar o timeout e notificar que parou de digitar após 500ms de inatividade
         clearTimeout(typingTimeout);
@@ -129,11 +113,7 @@ async function sla() {
 
     // Garantir que, ao fechar/recargar a página, o status de digitação seja limpo no servidor
     window.addEventListener('beforeunload', () => {
-        try {
-            socket.emit('typing', { username: username, isTyping: false });
-        } catch (e) {
-            // ignore
-        }
+        socket.emit('typing', { username: username, isTyping: false });
     });
     
     // Event listeners
@@ -143,7 +123,7 @@ async function sla() {
             sendMessage();
         }
     });
-    
+
     // Eventos do Socket.IO
     socket.on("message", data => appendMessage(data));
     socket.on("user-left", data => appendMessage(data, "system"));
@@ -151,12 +131,8 @@ async function sla() {
     // Receber notificação de digitação
     socket.on('typing', (data) => {
         let typingUsers = [];
-        try {
-            typingUsers = typeof data === 'string' ? JSON.parse(data) : data;
-            if (!Array.isArray(typingUsers)) typingUsers = [];
-        } catch (e) {
-            typingUsers = [];
-        }
+        typingUsers = typeof data === 'string' ? JSON.parse(data) : data;
+        if (!Array.isArray(typingUsers)) typingUsers = [];
 
         // Se não houver ninguém digitando, esconder o indicador
         if (typingUsers.length === 0) {
@@ -174,7 +150,6 @@ async function sla() {
     socket.on('user-joined', usersPackage => {
         // Atualizar lista de usuários conectados
         userListElement.innerHTML = ''; // Limpar lista atual
-        console.log(usersPackage)
         Object.values(JSON.parse(usersPackage)).forEach(userName => {
             const userItem = document.createElement('li');
             userItem.textContent = userName;
@@ -182,4 +157,4 @@ async function sla() {
         });
     })
 }
-sla()
+main()

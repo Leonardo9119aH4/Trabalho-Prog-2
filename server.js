@@ -225,7 +225,6 @@ function setupServer(httpServer, sessionMiddleware) {
       // Lista apenas os usuários que estão realmente digitando (isTyping === true)
       const typingNow = [...typingUsers.keys()];
 
-      console.log('Typing users:', typingNow);
       socket.broadcast.emit("typing", JSON.stringify(typingNow));
     });
   });
