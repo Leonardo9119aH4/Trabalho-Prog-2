@@ -1,79 +1,123 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat com Socket.IO</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Ícones do Bootstrap -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <!-- Socket.IO -->
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="script.js" defer async></script>
-    <link href="style.css" rel="stylesheet">
-</head>
-<body>
-    <div class="profileArea">
-        <div class="profileTitle"><h2>Perfil</h2></div>
-        <ul class="profileStats">
-            <li class="stat" id="profileName"><span>Nome do Usuário:</span></li>
-            <li class="stat" id="profileNumberMessages"><span>Mensagens Enviadas:</span></li>
-            <li class="stat" id="profileHours"><span>Tempo na Conversa:</span></li>
-        </ul>
-    </div>
-    <div class="container-xl mt-4">
-        <div class="row justify-content-center">
-            <!-- Coluna de usuários conectados -->
-            <div class="col-md-3 mb-3 mb-md-0">
-                <div class="card h-100">
-                    <div class="card-header bg-secondary text-white">
-                        <h6 class="mb-0">Usuários Online</h6>
-                    </div>
-                    <ul class="list-group list-group-flush" id="users-list">
-                        <!-- Usuários conectados serão inseridos aqui via JavaScript -->
-                    </ul>
-                </div>
-            </div>
-            <!-- Coluna do chat -->
-            <div class="col-md-8 col-lg-6">
-                <div class="card">
-                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <div>
-                            <h5 class="mb-0">Chat Online</h5>
-                            <small class="user-status" id="current-user-status">
-                                <span class="online-dot"></span>
-                                <span id="current-username">Usuário</span>
-                            </small>
+<!doctype html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="color-scheme" content="light dark" />
+        <title>Chat em Tempo Real</title>
+
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <!-- Bootstrap Icons -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+        <!-- App CSS -->
+        <link rel="stylesheet" href="./style.css" />
+
+        <!-- Socket.IO -->
+        <script src="/socket.io/socket.io.js"></script>
+        <!-- App JS -->
+        <script defer src="./script.js"></script>
+    </head>
+    <body>
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-md navbar-dark bg-transparent py-3">
+            <div class="container-xl">
+                <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+                    <span class="logo">💬</span>
+                    <span>Socket Chat</span>
+                </a>
+                        <div class="ms-auto d-none d-md-flex gap-2" id="nav-actions">
+                            <a href="/pages/home/main.html" class="btn btn-outline-light">Home</a>
+                            <button class="btn btn-danger d-none" id="nav-logout" type="button">Sair</button>
                         </div>
-                        <small id="status" class="text-light">Conectando...</small>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="chat-container d-flex flex-column">
-                            <!-- Área de mensagens -->
-                            <div class="messages-box" id="messages-box">
-                                <!-- Mensagens serão inseridas aqui via JavaScript -->
+            </div>
+        </nav>
+
+        <main class="container-xl py-3 py-md-4">
+            <div class="row g-4">
+                <!-- Sidebar: Perfil + Usuários -->
+                <div class="col-lg-4">
+                    <!-- Perfil -->
+                      <section class="glass p-0 mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0">Perfil</h6>
+                        </div>
+                        <ul class="list-group list-group-flush profileStats">
+                            <li class="list-group-item bg-transparent text-light" id="profileName"><span>Nome do Usuário:</span></li>
+                            <li class="list-group-item bg-transparent text-light" id="profileMessagesSent"><span>Mensagens Enviadas:</span></li>
+                            <li class="list-group-item bg-transparent text-light" id="profileWhenCreated"><span>Criação do Usuário:</span></li>
+                        </ul>
+                    </section>
+
+                    <!-- Usuários Online -->
+                      <section class="glass p-0">
+                        <div class="card-header bg-secondary text-white">
+                            <h6 class="mb-0">Usuários Online</h6>
+                        </div>
+                        <ul class="list-group list-group-flush" id="users-list"></ul>
+                    </section>
+                </div>
+
+                <!-- Chat -->
+                <div class="col-lg-8">
+                      <section class="glass p-0 d-flex flex-column chat-wrapper">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="mb-0">Chat Online</h5>
+                                <small class="user-status" id="current-user-status">
+                                    <span class="online-dot"></span>
+                                    <span id="current-username">Usuário</span>
+                                </small>
                             </div>
-                            
+                            <small id="status" class="text-light">Conectando...</small>
+                        </div>
+
+                        <div class="chat-container d-flex flex-column flex-grow-1">
+                            <!-- Área de mensagens -->
+                            <div class="messages-box flex-grow-1" id="messages-box"></div>
+
                             <!-- Indicador de digitação -->
                             <div class="typing-indicator" id="typing-indicator"></div>
-                            
+
                             <!-- Área de input -->
                             <div class="message-input">
-                                <input type="text" class="form-control me-2" placeholder="Digite sua mensagem..." 
-                                       id="message-input" autocomplete="off">
-                                <button class="btn btn-primary" id="send-button">
+                                <input type="text" class="form-control me-2" placeholder="Digite sua mensagem..." id="message-input" autocomplete="off" />
+                                <button class="btn btn-primary" id="send-button" aria-label="Enviar mensagem">
                                     <i class="bi bi-send"></i>
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    </section>
                 </div>
             </div>
-        </div>
-    </div>
+        </main>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+        <!-- Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+            <script>
+                (async function(){
+                    try{
+                        const res = await fetch('/session');
+                        const data = await res.json();
+                        const isAuth = !!data.authenticated;
+                        const logoutBtn = document.getElementById('nav-logout');
+                        if(isAuth && logoutBtn){ logoutBtn.classList.remove('d-none'); }
+                        if(logoutBtn){
+                            logoutBtn.addEventListener('click', async ()=>{
+                                try{
+                                    const r = await fetch('/logout', { method: 'POST' });
+                                    if(r.ok){ window.location.href = '/pages/home/main.html'; }
+                                }catch{}
+                            });
+                        }
+                    }catch{}
+                })();
+            </script>
+    </body>
+    </html>

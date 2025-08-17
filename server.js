@@ -134,10 +134,16 @@ function setupServer(httpServer, sessionMiddleware) {
         username: 'Sistema',
         message: `👋 ${data.username} entrou no chat!`
       });
-      if(connectedUsers.has(socket.id)) return; // Evita adicionar o mesmo usuário várias vezes
+      // Salva a mensagem do sistema no banco de dados
+      const message = new Message({
+        username: "Sistema",
+        message: `👋 ${data.username} entrou no chat!`
+      });
+      message.save().catch(err => {
+        console.error("Erro ao salvar mensagem:", err);
+      });
       connectedUsers.set(socket.id, data.username);
-      typingUsers.set(data.username, false);
-      console.log(connectedUsers)
+      console.log('connectedUsers:', connectedUsers);
       io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
     });
 
@@ -200,6 +206,15 @@ function setupServer(httpServer, sessionMiddleware) {
     socket.on("disconnect", () => {
       const username = connectedUsers.get(socket.id);
       if (username) {
+        connectedUsers = connectedUsers.filter(user => user.socketId !== socket.id);
+        // Salva a mensagem do sistema no banco de dados
+        const message = new Message({
+          username: "Sistema",
+          message: `👋 ${username} saiu do chat!`
+        });
+        message.save().catch(err => {
+          console.error("Erro ao salvar mensagem:", err);
+        });
         console.log(`🔴 Usuário desconectado: ${username}`);
         io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
         io.emit("message", {

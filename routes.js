@@ -2,6 +2,7 @@
 import express from "express";
 import session from "express-session";
 import { User } from './database.js';
+import req from "express/lib/request.js";
 
 // Middleware para verificar se o usuário está autenticado
 async function requireLogin(req, res, next) {
@@ -32,6 +33,10 @@ function routes(app){
     });
 
     app.post('/login', async (req, res) => {
+        if (req.session && req.session.user) {
+            res.status(400).json('Usuário já autenticado');
+            return;
+        }
         const { username, password } = req.body;
         const user = await User.findOne({ username });
         if (user && user.password === password) {
@@ -43,7 +48,7 @@ function routes(app){
         }
     });
 
-    app.get('/logout', async (req, res) => {
+    app.post('/logout', async (req, res) => {
         req.session.destroy(err => {
             if (err) {
                 return res.status(500).json('Erro ao fazer logout');
@@ -55,6 +60,32 @@ function routes(app){
     app.get('/user', requireLogin, async (req, res) => {
         res.status(200).json(req.session.user);
     });
+
+    // Sessão atual (sem erro 401): retorna 200 com {authenticated} ou 200 com user
+    app.get('/session', async (req, res) => {
+        if (req.session && req.session.user) {
+            res.status(200).json({ authenticated: true, user: req.session.user });
+            return;
+        }
+        res.status(200).json({ authenticated: false });
+    });
+
+    app.get('/userStats', requireLogin, async (req, res) => {
+    try {
+        const user = await User.findById(req.session.user._id);
+        if (!user) {
+            return res.status(400).json("Informações do usuário não foram encontradas.");
+        }
+        
+        res.status(200).json({
+            userName: user.username,
+            userMessagesSent: user.messagesSent || 0,
+            userWhenCreated: user.whenCreated
+        });
+    } catch {
+        return res.status(400).json("Informações do usuário não foram encontradas.");
+    }
+});
 }
 
 export { routes };

@@ -20,6 +20,8 @@ function redirectIfNotLogged() {
 
 
 
+
+
 async function main() {
     // Tenta obter usuário logado, se não, usa 'Usuário' como padrão
     let username = 'Usuário';
@@ -161,7 +163,6 @@ async function main() {
         });
     })
 }
-main()
 sla()
 
 /* ----------------------------- PROFILE ------------------ */
