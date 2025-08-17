@@ -6,19 +6,9 @@ import { User, Message } from './database.js';
 import session from "express-session";
 
 function setupServer(httpServer, sessionMiddleware) {
-  const io = new Server(httpServer);
-  //Disponibiliza a sessão para o socket
-  io.use((socket, next)=>{
-    sessionMiddleware(socket.request, {}, next);
-  });
-
-  // Armazenar usuários conectados
-  let connectedUsers = new Map(); // socket.id -> username
-
   const processCommand = async (socket, username, message) => {
     const args = message.slice(1).split(' ');
     const command = args[0].toLowerCase();
-
     switch (command) {
       case 'help':
         socket.emit("message", {
@@ -126,6 +116,9 @@ function setupServer(httpServer, sessionMiddleware) {
     return;
   };
 
+  // Aqui que começa a completar
+
+   /*
   io.on("connection", socket => {
     console.log("🟢 Novo cliente conectado");
     socket.on("connection", data => {
@@ -145,7 +138,8 @@ function setupServer(httpServer, sessionMiddleware) {
       console.log(connectedUsers)
       io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
     });
-
+  */
+ 
     // Enviar mensagens salvas do banco de dados
     Message.find().sort({ time: 1 }).limit(50).then(messages => {
       messages.forEach(msg => {
@@ -159,7 +153,7 @@ function setupServer(httpServer, sessionMiddleware) {
     }).catch(err => {
       console.error("Erro ao buscar mensagens:", err);
     });
-
+    
     socket.on("message", msg => {
       if (!socket.request.session || !socket.request.session.user) { // Verfifica se o usuário está logado
         socket.emit("unauthorized");
