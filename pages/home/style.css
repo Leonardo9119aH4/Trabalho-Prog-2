@@ -1,0 +1,64 @@
+:root{
+	--bg-start:#0f172a; /* slate-900 */
+	--bg-end:#1e293b;   /* slate-800 */
+	--glass-bg: rgba(255,255,255,0.06);
+	--glass-br: 14px;
+	--glass-bd: 1px solid rgba(255,255,255,0.15);
+	--txt:#e5e7eb;      /* gray-200 */
+	--muted:#cbd5e1;    /* slate-300 */
+	--primary:#6366f1;  /* indigo-500 */
+	--primary-600:#5458ee;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+	margin:0;
+	font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+	color:var(--txt);
+	background: radial-gradient(1000px 600px at 10% -10%, #3b82f6 0%, transparent 60%),
+							radial-gradient(800px 500px at 110% 10%, #22d3ee 0%, transparent 60%),
+							linear-gradient(160deg, var(--bg-start), var(--bg-end));
+	background-attachment: fixed;
+}
+
+.navbar .btn-primary{
+	background:var(--primary);
+	border:none;
+}
+.navbar .btn-primary:hover{background:var(--primary-600)}
+.navbar{backdrop-filter:saturate(160%) blur(8px)}
+
+.hero{padding: clamp(1.5rem, 4vw, 3rem) 1rem 1rem}
+.glass{
+	background: var(--glass-bg);
+	border: var(--glass-bd);
+	border-radius: var(--glass-br);
+	box-shadow: 0 10px 30px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.logo{filter:drop-shadow(0 4px 10px rgba(0,0,0,0.4))}
+
+.feature-card{transition: transform .25s ease, box-shadow .25s ease}
+.feature-card:hover{transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.35)}
+.feature-icon{font-size:1.8rem}
+
+.btn-outline-light{border-color:rgba(255,255,255,0.35); color:#f8fafc}
+.btn-outline-light:hover{background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.55)}
+
+.text-secondary-emphasis{color:var(--muted)!important}
+
+/* reveal on scroll */
+.reveal{opacity:0; transform: translateY(14px); animation: rise .7s ease forwards .15s}
+@keyframes rise{to{opacity:1; transform:none}}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce){
+	.feature-card{transition:none}
+	.reveal{animation:none; opacity:1; transform:none}
+}
+
+/* Responsive tweaks */
+@media (min-width: 992px){
+	.hero{padding-top: 4rem}
+}

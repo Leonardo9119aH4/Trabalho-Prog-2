@@ -1,3 +1,24 @@
+:root{
+  --bg-start:#0f172a; --bg-end:#1e293b; --txt:#e5e7eb; --muted:#cbd5e1;
+  --glass-bg: rgba(255,255,255,0.06); --glass-bd: 1px solid rgba(255,255,255,0.15);
+}
+
+body{
+  background: radial-gradient(1000px 600px at 10% -10%, #3b82f6 0%, transparent 60%),
+              radial-gradient(800px 500px at 110% 10%, #22d3ee 0%, transparent 60%),
+              linear-gradient(160deg, var(--bg-start), var(--bg-end));
+  background-attachment: fixed;
+  color: var(--txt);
+}
+
+.glass{
+  background: var(--glass-bg);
+  border: var(--glass-bd);
+}
+
+.btn-outline-light{border-color:rgba(255,255,255,0.35); color:#f8fafc}
+.btn-outline-light:hover{background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.55)}
+
 body {
     background-color: #f8f9fa;
     font-family: 'Segoe UI', Arial, sans-serif;
@@ -14,13 +35,13 @@ body {
     background: linear-gradient(135deg, #e9ecef, rgb(157, 156, 157));
 }
 
-.container {
+.auth-container {
     background: #fff;
     border-radius: 16px;
     box-shadow: 0 4px 24px rgba(0,0,0,0.08);
     padding: 32px 28px;
-    max-width: 320px;
-    width: 90%;
+    max-width: 90%;
+    width: 40%;
 }
 
 .titulo {
@@ -68,4 +89,122 @@ body {
 
 #signup-form button:hover {
     background: #084298;
+}
+
+/* Overlay e animação de sucesso (reaproveita do login) */
+.success-overlay {
+    position: fixed;
+    inset: 0;
+    display: none; /* mostrado via JS */
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(2px);
+    z-index: 9999;
+}
+
+.success-overlay.show { display: flex; }
+
+.success-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 24px;
+    width: min(440px, 92vw);
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+    animation: popIn 260ms ease-out both;
+}
+
+.success-card h2 {
+    margin: 12px 0 6px;
+    color: #198754;
+}
+
+.success-card p { color: #495057; margin: 0 0 12px; }
+
+.success-icon {
+    position: relative;
+    width: 88px;
+    height: 88px;
+    margin: 0 auto;
+}
+
+.success-icon-circle {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #34d399, #16a34a);
+    box-shadow: 0 8px 20px rgba(22, 163, 74, 0.35);
+    transform: scale(0.6);
+    animation: scaleUp 380ms 80ms ease-out forwards;
+}
+
+.success-icon-check {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 44px;
+    height: 22px;
+    border: 6px solid #fff;
+    border-top: none;
+    border-right: none;
+    transform: translate(-50%, -40%) rotate(-45deg) scale(0.6);
+    transform-origin: center;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.08));
+    opacity: 0;
+    animation: drawCheck 420ms 220ms ease-out forwards;
+}
+
+.success-progress {
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.success-progress .bar {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #a7f3d0, #34d399, #10b981);
+    animation: progressFill 1600ms 300ms ease-in-out forwards;
+}
+
+/* Acessibilidade: esconder visualmente mantendo no DOM */
+.visually-hidden {
+    position: absolute !important;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap; border: 0;
+}
+
+.alt-actions a { color:#60a5fa; border-color:#60a5fa; }
+.alt-actions a:hover { color:#1e3a8a; background: #bfdbfe; border-color:#93c5fd; }
+
+/* Or divider visibility (match login) */
+.or-divider { position: relative; margin: 14px 0 16px; }
+.or-divider::before, .or-divider::after { content:""; position:absolute; top:50%; width:45%; height:1px; background:#dee2e6; }
+.or-divider::before{ left:0; } .or-divider::after{ right:0; }
+.or-divider span{ background:#fff; padding:0 10px; color:#6c757d; font-weight:500 }
+
+@keyframes popIn {
+  from { transform: translateY(6px) scale(0.98); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes scaleUp {
+  to { transform: scale(1); }
+}
+
+@keyframes drawCheck {
+  0% { opacity: 0; transform: translate(-50%, -40%) rotate(-45deg) scale(0.6); }
+  30% { opacity: 1; }
+  100% { opacity: 1; transform: translate(-50%, -40%) rotate(-45deg) scale(1); }
+}
+
+@keyframes progressFill {
+  0% { width: 0; }
+  100% { width: 100%; }
 }
