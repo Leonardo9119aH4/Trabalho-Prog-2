@@ -14,6 +14,7 @@ function setupServer(httpServer, sessionMiddleware) {
 
   // Armazenar usuários conectados
   let connectedUsers = new Map(); // socket.id -> username
+  let typingUsers = new Map(); // username -> isTyping
 
   const processCommand = async (socket, username, message) => {
     const args = message.slice(1).split(' ');
@@ -203,7 +204,7 @@ function setupServer(httpServer, sessionMiddleware) {
     });
 
     socket.on("disconnect", () => {
-      const username = connectedUsers.has(user => user.socketId === socket.id)?.username;
+      const username = connectedUsers.get(socket.id);
       if (username) {
         connectedUsers = connectedUsers.filter(user => user.socketId !== socket.id);
         // Salva a mensagem do sistema no banco de dados
@@ -215,22 +216,31 @@ function setupServer(httpServer, sessionMiddleware) {
           console.error("Erro ao salvar mensagem:", err);
         });
         console.log(`🔴 Usuário desconectado: ${username}`);
+        io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
+        io.emit("message", {
+          username: 'Sistema',
+          message: `👋 ${username} saiu do chat!`
+        });
+        connectedUsers.delete(socket.id);
+        typingUsers.delete(username);
       }
     });
 
     socket.on("typing", data => {
-      if (data.isTyping) {
-        console.log(`${data.username} está digitando...`);
-        socket.broadcast.emit("typing", {
-          username: data.username,
-          isTyping: true
-        });
+      const username = connectedUsers.get(socket.id);
+      if (!username) return; // safety
+
+      // Se isTyping for true, marca como digitando; se false, remove da lista
+      if (data && data.isTyping) {
+        typingUsers.set(username, true);
       } else {
-        socket.broadcast.emit("typing", {
-          username: data.username,
-          isTyping: false
-        });
+        typingUsers.delete(username);
       }
+
+      // Lista apenas os usuários que estão realmente digitando (isTyping === true)
+      const typingNow = [...typingUsers.keys()];
+
+      socket.broadcast.emit("typing", JSON.stringify(typingNow));
     });
   });
 };
