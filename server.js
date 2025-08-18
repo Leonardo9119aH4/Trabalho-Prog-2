@@ -6,20 +6,9 @@ import { User, Message } from './database.js';
 import session from "express-session";
 
 function setupServer(httpServer, sessionMiddleware) {
-  const io = new Server(httpServer);
-  //Disponibiliza a sessão para o socket
-  io.use((socket, next)=>{
-    sessionMiddleware(socket.request, {}, next);
-  });
-
-  // Armazenar usuários conectados
-  let connectedUsers = new Map(); // socket.id -> username
-  let typingUsers = new Map(); // username -> isTyping
-
   const processCommand = async (socket, username, message) => {
     const args = message.slice(1).split(' ');
     const command = args[0].toLowerCase();
-
     switch (command) {
       case 'help':
         socket.emit("message", {
@@ -127,40 +116,58 @@ function setupServer(httpServer, sessionMiddleware) {
     return;
   };
 
-  io.on("connection", socket => {
-    console.log("🟢 Novo cliente conectado");
-    socket.on("connection", data => {
-      io.emit("message", {
-        username: 'Sistema',
-        message: `👋 ${data.username} entrou no chat!`
-      });
-      // Salva a mensagem do sistema no banco de dados
+  const salvarMensagem = async(usuario, mensagem)=>{
+    try {
       const message = new Message({
         username: "Sistema",
         message: `👋 ${data.username} entrou no chat!`
       });
-      message.save().catch(err => {
-        console.error("Erro ao salvar mensagem:", err);
+
+      message.save();
+    }
+    catch(er){
+      console.log(er);
+    }
+  }
+
+  // Comece por aqui
+
+  const io = new Server(httpServer);
+  io.use((socket, next)=>{ //Disponibiliza a sessão para o socket
+    sessionMiddleware(socket.request, {}, next);
+  });
+  let connectedUsers = new Map(); // Armazenar usuários conectados, socket.id -> username
+
+  // Enviar mensagens salvas do banco de dados ao usuário
+
+  io.on("connection", socket => {
+    console.log("🟢 Novo cliente conectado");
+    socket.on("connection", data => {
+      const mensagemSistema = `👋 ${data.username} entrou no chat!`;
+      io.emit("message", {
+        username: 'Sistema',
+        message: mensagemSistema
       });
+      // Salva a mensagem do sistema no banco de dados
+      salvarMensagem("Sistema", mensagemSistema);
       connectedUsers.set(socket.id, data.username);
       console.log('connectedUsers:', connectedUsers);
       io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
-    });
 
-    // Enviar mensagens salvas do banco de dados
-    Message.find().sort({ time: 1 }).limit(50).then(messages => {
-      messages.forEach(msg => {
-        socket.emit("message", {
-          username: msg.username,
-          message: msg.message
+      Message.find().sort({ time: 1 }).limit(50).then(messages => {
+        messages.forEach(msg => {
+          socket.emit("message", {
+            username: msg.username,
+            message: msg.message
+          });
         });
+      }).then(() => {
+        console.log("Mensagens recuperadas do banco de dados e enviadas ao cliente");
+      }).catch(err => {
+        console.error("Erro ao buscar mensagens:", err);
       });
-    }).then(() => {
-      console.log("Mensagens recuperadas do banco de dados e enviadas ao cliente");
-    }).catch(err => {
-      console.error("Erro ao buscar mensagens:", err);
     });
-
+    
     socket.on("message", msg => {
       if (!socket.request.session || !socket.request.session.user) { // Verfifica se o usuário está logado
         socket.emit("unauthorized");
@@ -170,20 +177,16 @@ function setupServer(httpServer, sessionMiddleware) {
         processCommand(socket, msg.username, msg.message);
         return;
       }
-
       console.log(`💬 ${msg.username}: ${msg.message}`);
-      
       // Armazenar o usuário se ainda não estiver na lista
       if (!connectedUsers.has(socket.id)) {
         connectedUsers.set(socket.id, msg.username);
         console.log(`👤 Novo usuário registrado: ${msg.username}`);
       }
-      
       io.emit("message", {
         username: msg.username,
         message: msg.message
       });
-
       // Incrementar o contador de mensagens enviadas
       User.findOneAndUpdate(
         { username: msg.username },
@@ -192,19 +195,26 @@ function setupServer(httpServer, sessionMiddleware) {
       ).catch(err => {
         console.error("Erro ao atualizar mensagens enviadas:", err);
       });
+      salvarMensagem(msg.username, msg.message);
+    });
 
-      // Salvar a mensagem no banco de dados
-      const message = new Message({
-        username: msg.username,
-        message: msg.message
-      });
-      message.save().catch(err => {
-        console.error("Erro ao salvar mensagem:", err);
-      });
+    socket.on("typing", data => {
+      if (data.isTyping) {
+        console.log(`${data.username} está digitando...`);
+        socket.broadcast.emit("typing", {
+          username: data.username,
+          isTyping: true
+        });
+      } else {
+        socket.broadcast.emit("typing", {
+          username: data.username,
+          isTyping: false
+        });
+      }
     });
 
     socket.on("disconnect", () => {
-      const username = connectedUsers.get(socket.id);
+      const username = connectedUsers.has(user => user.socketId === socket.id)?.username;
       if (username) {
         connectedUsers = connectedUsers.filter(user => user.socketId !== socket.id);
         // Salva a mensagem do sistema no banco de dados
@@ -216,32 +226,9 @@ function setupServer(httpServer, sessionMiddleware) {
           console.error("Erro ao salvar mensagem:", err);
         });
         console.log(`🔴 Usuário desconectado: ${username}`);
-        io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
-        io.emit("message", {
-          username: 'Sistema',
-          message: `👋 ${username} saiu do chat!`
-        });
-        connectedUsers.delete(socket.id);
-        typingUsers.delete(username);
       }
     });
-
-    socket.on("typing", data => {
-      const username = connectedUsers.get(socket.id);
-      if (!username) return; // safety
-
-      // Se isTyping for true, marca como digitando; se false, remove da lista
-      if (data && data.isTyping) {
-        typingUsers.set(username, true);
-      } else {
-        typingUsers.delete(username);
-      }
-
-      // Lista apenas os usuários que estão realmente digitando (isTyping === true)
-      const typingNow = [...typingUsers.keys()];
-
-      socket.broadcast.emit("typing", JSON.stringify(typingNow));
-    });
+    
   });
 };
 
