@@ -140,23 +140,10 @@ function setupServer(httpServer, sessionMiddleware) {
 
   // Enviar mensagens salvas do banco de dados ao usuário
 
-    Message.find().sort({ time: 1 }).limit(50).then(messages => {
-      messages.forEach(msg => {
-        socket.emit("message", {
-          username: msg.username,
-          message: msg.message
-        });
-      });
-    }).then(() => {
-      console.log("Mensagens recuperadas do banco de dados e enviadas ao cliente");
-    }).catch(err => {
-      console.error("Erro ao buscar mensagens:", err);
-    });
-
   io.on("connection", socket => {
     console.log("🟢 Novo cliente conectado");
-    const mensagemSistema = `👋 ${data.username} entrou no chat!`;
     socket.on("connection", data => {
+      const mensagemSistema = `👋 ${data.username} entrou no chat!`;
       io.emit("message", {
         username: 'Sistema',
         message: mensagemSistema
@@ -166,6 +153,19 @@ function setupServer(httpServer, sessionMiddleware) {
       connectedUsers.set(socket.id, data.username);
       console.log(connectedUsers)
       io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
+
+      Message.find().sort({ time: 1 }).limit(50).then(messages => {
+        messages.forEach(msg => {
+          socket.emit("message", {
+            username: msg.username,
+            message: msg.message
+          });
+        });
+      }).then(() => {
+        console.log("Mensagens recuperadas do banco de dados e enviadas ao cliente");
+      }).catch(err => {
+        console.error("Erro ao buscar mensagens:", err);
+      });
     });
     
     socket.on("message", msg => {
