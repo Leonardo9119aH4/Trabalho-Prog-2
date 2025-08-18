@@ -151,7 +151,7 @@ function setupServer(httpServer, sessionMiddleware) {
       // Salva a mensagem do sistema no banco de dados
       salvarMensagem("Sistema", mensagemSistema);
       connectedUsers.set(socket.id, data.username);
-      console.log(connectedUsers)
+      console.log('connectedUsers:', connectedUsers);
       io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
 
       Message.find().sort({ time: 1 }).limit(50).then(messages => {
