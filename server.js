@@ -9,7 +9,6 @@ function setupServer(httpServer, sessionMiddleware) {
   const processCommand = async (socket, username, message) => {
     const args = message.slice(1).split(' ');
     const command = args[0].toLowerCase();
-
     switch (command) {
       case 'help':
         socket.emit("message", {
@@ -123,6 +122,7 @@ function setupServer(httpServer, sessionMiddleware) {
         username: "Sistema",
         message: `👋 ${data.username} entrou no chat!`
       });
+
       message.save();
     }
     catch(er){
@@ -139,6 +139,7 @@ function setupServer(httpServer, sessionMiddleware) {
   let connectedUsers = new Map(); // Armazenar usuários conectados, socket.id -> username
 
   // Enviar mensagens salvas do banco de dados ao usuário
+
     Message.find().sort({ time: 1 }).limit(50).then(messages => {
       messages.forEach(msg => {
         socket.emit("message", {
@@ -166,7 +167,7 @@ function setupServer(httpServer, sessionMiddleware) {
       console.log(connectedUsers)
       io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
     });
-
+    
     socket.on("message", msg => {
       if (!socket.request.session || !socket.request.session.user) { // Verfifica se o usuário está logado
         socket.emit("unauthorized");
