@@ -1,21 +1,14 @@
+import { createServer } from "http";
 import { Server } from "socket.io";
 import { answerUser } from "./scriptGemini.js";
+import { connect } from "http2";
 import { User, Message } from './database.js';
+import session from "express-session";
 
 function setupServer(httpServer, sessionMiddleware) {
-  const io = new Server(httpServer);
-  //Disponibiliza a sessão para o socket
-  io.use((socket, next)=>{
-    sessionMiddleware(socket.request, {}, next);
-  });
-
-  // Armazenar usuários conectados (socket.id -> username)
-  const connectedUsers = new Map();
-
   const processCommand = async (socket, username, message) => {
     const args = message.slice(1).split(' ');
     const command = args[0].toLowerCase();
-
     switch (command) {
       case 'help':
         socket.emit("message", {
@@ -25,16 +18,15 @@ function setupServer(httpServer, sessionMiddleware) {
                    "• `/users` - Lista usuários online\n" +
                    "• `/time` - Mostra horário atual\n" +
                    "• `/clear` - Limpa seu chat\n" +
-                   "• `/ia [mensagem]` - Conversa com a IA\n" +
+                   "• `/ia [mensagem]` - Conversa com a IA" +
                    "• `/tell [usuário] [mensagem]` - Envia uma mensagem privada para outro usuário\n"
         });
         break;
         
       case 'users':
-        const uniqueUsers = Array.from(new Set(connectedUsers.values()));
-        const userList = uniqueUsers.join(', ');
+        const userList = Array.from(connectedUsers.values()).join(', ');
         socket.emit("message", {
-          message: `👥 Usuários online (${uniqueUsers.length}): ${userList}`
+          message: `👥 Usuários online (${connectedUsers.size}): ${userList}`
         });
         break;
         
@@ -124,46 +116,58 @@ function setupServer(httpServer, sessionMiddleware) {
     return;
   };
 
-  io.on("connection", socket => {
-    console.log("🟢 Novo cliente conectado");
-  socket.on("connection", data => {
-      io.emit("message", {
-        username: 'Sistema',
-        message: `👋 ${data.username} entrou no chat!`
-      });
-      // Salva a mensagem do sistema no banco de dados
+  const salvarMensagem = async(usuario, mensagem)=>{
+    try {
       const message = new Message({
         username: "Sistema",
         message: `👋 ${data.username} entrou no chat!`
       });
-      message.save().catch(err => {
-        console.error("Erro ao salvar mensagem:", err);
+
+      message.save();
+    }
+    catch(er){
+      console.log(er);
+    }
+  }
+
+  // Comece por aqui
+
+  const io = new Server(httpServer);
+  io.use((socket, next)=>{ //Disponibiliza a sessão para o socket
+    sessionMiddleware(socket.request, {}, next);
+  });
+  let connectedUsers = new Map(); // Armazenar usuários conectados, socket.id -> username
+
+  // Enviar mensagens salvas do banco de dados ao usuário
+
+  io.on("connection", socket => {
+    console.log("🟢 Novo cliente conectado");
+    socket.on("connection", data => {
+      const mensagemSistema = `👋 ${data.username} entrou no chat!`;
+      io.emit("message", {
+        username: 'Sistema',
+        message: mensagemSistema
       });
-      // Deduplica por nome: remove sockets antigos do mesmo usuário
-      for (const [id, name] of connectedUsers) {
-        if (name === data.username && id !== socket.id) {
-          connectedUsers.delete(id);
-        }
-      }
+      // Salva a mensagem do sistema no banco de dados
+      salvarMensagem("Sistema", mensagemSistema);
       connectedUsers.set(socket.id, data.username);
       console.log('connectedUsers:', connectedUsers);
       io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
-    });
 
-    // Enviar mensagens salvas do banco de dados
-    Message.find().sort({ time: 1 }).limit(50).then(messages => {
-      messages.forEach(msg => {
-        socket.emit("message", {
-          username: msg.username,
-          message: msg.message
+      Message.find().sort({ time: 1 }).limit(50).then(messages => {
+        messages.forEach(msg => {
+          socket.emit("message", {
+            username: msg.username,
+            message: msg.message
+          });
         });
+      }).then(() => {
+        console.log("Mensagens recuperadas do banco de dados e enviadas ao cliente");
+      }).catch(err => {
+        console.error("Erro ao buscar mensagens:", err);
       });
-    }).then(() => {
-      console.log("Mensagens recuperadas do banco de dados e enviadas ao cliente");
-    }).catch(err => {
-      console.error("Erro ao buscar mensagens:", err);
     });
-
+    
     socket.on("message", msg => {
       if (!socket.request.session || !socket.request.session.user) { // Verfifica se o usuário está logado
         socket.emit("unauthorized");
@@ -173,14 +177,16 @@ function setupServer(httpServer, sessionMiddleware) {
         processCommand(socket, msg.username, msg.message);
         return;
       }
-
       console.log(`💬 ${msg.username}: ${msg.message}`);
-      
+      // Armazenar o usuário se ainda não estiver na lista
+      if (!connectedUsers.has(socket.id)) {
+        connectedUsers.set(socket.id, msg.username);
+        console.log(`👤 Novo usuário registrado: ${msg.username}`);
+      }
       io.emit("message", {
         username: msg.username,
         message: msg.message
       });
-
       // Incrementar o contador de mensagens enviadas
       User.findOneAndUpdate(
         { username: msg.username },
@@ -189,52 +195,7 @@ function setupServer(httpServer, sessionMiddleware) {
       ).catch(err => {
         console.error("Erro ao atualizar mensagens enviadas:", err);
       });
-
-      // Salvar a mensagem no banco de dados
-      const message = new Message({
-        username: msg.username,
-        message: msg.message
-      });
-      message.save().catch(err => {
-        console.error("Erro ao salvar mensagem:", err);
-      });
-    });
-
-    // Limpa otimisticamente no 'disconnecting' (página recarregando)
-    socket.on("disconnecting", () => {
-      const username = connectedUsers.get(socket.id);
-      if (!username) return;
-      connectedUsers.delete(socket.id);
-      io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
-    });
-
-    socket.on("disconnect", (reason) => {
-      const username = connectedUsers.get(socket.id);
-      // Pode já ter sido removido no 'disconnecting'
-      if (username) {
-        connectedUsers.delete(socket.id);
-      }
-
-      const who = username || `socket ${socket.id}`;
-
-      // Mensagem de saída para todos (apenas se sabermos o usuário)
-      if (username) {
-        io.emit("message", {
-          username: "Sistema",
-          message: `👋 ${username} saiu do chat!`
-        });
-
-        // Atualiza lista de usuários online para todos
-        io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
-
-        // Salva a saída no banco
-        const message = new Message({ username: "Sistema", message: `👋 ${username} saiu do chat!` });
-        message.save().catch(err => {
-          console.error("Erro ao salvar mensagem:", err);
-        });
-      }
-
-      console.log(`🔴 Desconectado: ${who} (motivo: ${reason})`);
+      salvarMensagem(msg.username, msg.message);
     });
 
     socket.on("typing", data => {
@@ -251,6 +212,23 @@ function setupServer(httpServer, sessionMiddleware) {
         });
       }
     });
+
+    socket.on("disconnect", () => {
+      const username = connectedUsers.has(user => user.socketId === socket.id)?.username;
+      if (username) {
+        connectedUsers = connectedUsers.filter(user => user.socketId !== socket.id);
+        // Salva a mensagem do sistema no banco de dados
+        const message = new Message({
+          username: "Sistema",
+          message: `👋 ${username} saiu do chat!`
+        });
+        message.save().catch(err => {
+          console.error("Erro ao salvar mensagem:", err);
+        });
+        console.log(`🔴 Usuário desconectado: ${username}`);
+      }
+    });
+    
   });
 };
 
