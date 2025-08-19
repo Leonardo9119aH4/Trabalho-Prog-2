@@ -131,29 +131,16 @@ function setupServer(httpServer, sessionMiddleware) {
 
   // Comece por aqui
 
-  const io = new Server(httpServer);
-  io.use((socket, next)=>{ //Disponibiliza a sessão para o socket
-    sessionMiddleware(socket.request, {}, next);
-  });
-  let connectedUsers = new Map(); // Armazenar usuários conectados, socket.id -> username
-
-  // Enviar mensagens salvas do banco de dados ao usuário
-
   io.on("connection", socket => {
     console.log("🟢 Novo cliente conectado");
     socket.on("connection", data => {
       const mensagemSistema = `👋 ${data.username} entrou no chat!`;
-      io.emit("message", {
-        username: 'Sistema',
-        message: mensagemSistema
-      });
-      // Salva a mensagem do sistema no banco de dados
-      salvarMensagem("Sistema", mensagemSistema);
-      connectedUsers.set(socket.id, data.username);
-      console.log('connectedUsers:', connectedUsers);
-      io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
+      // Insira aqui em baixo
 
-      Message.find().sort({ time: 1 }).limit(50).then(messages => {
+      /*connectedUsers.set(socket.id, data.username); // I <<<<<<<<<<<<<<<<< I
+      console.log('connectedUsers:', connectedUsers);
+      io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));*/
+      /*Message.find().sort({ time: 1 }).limit(50).then(messages => { // II <<<<<<<<<<<<<<<<< II
         messages.forEach(msg => {
           socket.emit("message", {
             username: msg.username,
@@ -164,40 +151,33 @@ function setupServer(httpServer, sessionMiddleware) {
         console.log("Mensagens recuperadas do banco de dados e enviadas ao cliente");
       }).catch(err => {
         console.error("Erro ao buscar mensagens:", err);
-      });
+      });*/
     });
     
-    socket.on("message", msg => {
-      if (!socket.request.session || !socket.request.session.user) { // Verfifica se o usuário está logado
+    socket.on("message", msg => { // III <<<<<<<<<<<<<<<<< III
+      /*if (!socket.request.session || !socket.request.session.user) { // Verfifica se o usuário está logado IV <<<<<<<<<<<<<<<<< IV
         socket.emit("unauthorized");
         return;
-      }
-      if (msg.message.startsWith('/')){
-        processCommand(socket, msg.username, msg.message);
-        return;
-      }
+      }*/
+      
       console.log(`💬 ${msg.username}: ${msg.message}`);
-      // Armazenar o usuário se ainda não estiver na lista
-      if (!connectedUsers.has(socket.id)) {
+      
+      if (!connectedUsers.has(socket.id)) { // Armazenar o usuário se ainda não estiver na lista V <<<<<<<<<<<<<<<<< V
         connectedUsers.set(socket.id, msg.username);
         console.log(`👤 Novo usuário registrado: ${msg.username}`);
       }
-      io.emit("message", {
-        username: msg.username,
-        message: msg.message
-      });
-      // Incrementar o contador de mensagens enviadas
-      User.findOneAndUpdate(
+      
+      /*User.findOneAndUpdate( // Incrementar o contador de mensagens enviadas
         { username: msg.username },
         { $inc: { messagesSent: 1 } },
         { new: true }
       ).catch(err => {
         console.error("Erro ao atualizar mensagens enviadas:", err);
       });
-      salvarMensagem(msg.username, msg.message);
+      salvarMensagem(msg.username, msg.message);*/
     });
 
-    socket.on("typing", data => {
+    /*socket.on("typing", data => { // VI <<<<<<<<<<<<<<<<< VI
       if (data.isTyping) {
         console.log(`${data.username} está digitando...`);
         socket.broadcast.emit("typing", {
@@ -211,21 +191,7 @@ function setupServer(httpServer, sessionMiddleware) {
           isTyping: false
         });
       }
-    });
-
-    socket.on("disconnect", () => {
-      const username = connectedUsers.get(socket.id);
-      if (username) {
-        connectedUsers.delete(socket.id);
-        salvarMensagem("Sistema", `${username} saiu do chat!`);
-        io.emit("message", {
-          username: 'Sistema',
-          message: `👋 ${username} saiu do chat!`
-        });
-        io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
-        console.log(`🔴 Usuário desconectado: ${username}`);
-      }
-    });
+    });*/
     
   });
 };
