@@ -119,10 +119,9 @@ function setupServer(httpServer, sessionMiddleware) {
   const salvarMensagem = async(usuario, mensagem)=>{
     try {
       const message = new Message({
-        username: "Sistema",
-        message: `👋 ${data.username} entrou no chat!`
+        username: usuario,
+        message: mensagem
       });
-
       message.save();
     }
     catch(er){
@@ -205,7 +204,8 @@ function setupServer(httpServer, sessionMiddleware) {
           username: data.username,
           isTyping: true
         });
-      } else {
+      } 
+      else {
         socket.broadcast.emit("typing", {
           username: data.username,
           isTyping: false
@@ -214,17 +214,15 @@ function setupServer(httpServer, sessionMiddleware) {
     });
 
     socket.on("disconnect", () => {
-      const username = connectedUsers.has(user => user.socketId === socket.id)?.username;
+      const username = connectedUsers.get(socket.id);
       if (username) {
-        connectedUsers = connectedUsers.filter(user => user.socketId !== socket.id);
-        // Salva a mensagem do sistema no banco de dados
-        const message = new Message({
-          username: "Sistema",
+        connectedUsers.delete(socket.id);
+        salvarMensagem("Sistema", `${username} saiu do chat!`);
+        io.emit("message", {
+          username: 'Sistema',
           message: `👋 ${username} saiu do chat!`
         });
-        message.save().catch(err => {
-          console.error("Erro ao salvar mensagem:", err);
-        });
+        io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
         console.log(`🔴 Usuário desconectado: ${username}`);
       }
     });
