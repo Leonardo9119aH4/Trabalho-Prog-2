@@ -1,38 +1,44 @@
-const messagesBox = document.getElementById('messages-box');
-const messageInput = document.getElementById('message-input');
-const sendButton = document.getElementById('send-button');
-const typingIndicator = document.getElementById('typing-indicator');
-const currentUsernameElement = document.getElementById('current-username');
-const statusElement = document.getElementById('status');
-const userListElement = document.getElementById('users-list');
 const socket = io();
-// Variável para controlar timeout de digitação
-let typingTimeout;
 
 function redirectIfNotLogged() {
     fetch('/user')
         .then(response => {
             if (response.status === 401) {
-                window.location.href = '../login/main.html?reason=send-message';
+                window.location.href = '../signup/main.html';
             }
         });
 }
 
 
 
-
-
-async function main() {
+async function sla() {
     // Tenta obter usuário logado, se não, usa 'Usuário' como padrão
     let username = 'Usuário';
-    const response = await fetch('/user');
-    if (response.ok) {
-        const user = await response.json();
-        if (user && user.username) {
-            username = user.username;
-            socket.emit("connection", { username });
+    try {
+        const response = await fetch('/user');
+        console.log("achou")
+        if (response.ok) {
+            const user = await response.json();
+            if (user && user.username) {
+                username = user.username;
+                socket.emit("connection", { username });
+            }
         }
+    } catch (error) {
+        // Ignora erro, mantém 'Usuário' como padrão
     }
+
+
+    const messagesBox = document.getElementById('messages-box');
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+    const typingIndicator = document.getElementById('typing-indicator');
+    const currentUsernameElement = document.getElementById('current-username');
+    const statusElement = document.getElementById('status');
+    const userListElement = document.getElementById('users-list');
+    
+    // Variável para controlar timeout de digitação
+    let typingTimeout;
 
     // Mostrar nome do usuário no topo
     currentUsernameElement.textContent = username;
@@ -78,25 +84,24 @@ async function main() {
             messageElement.className = 'message';
             messageElement.textContent = data.message;
             messageContainer.appendChild(messageElement);
+            
             messagesBox.appendChild(messageContainer);
         }
+        
         messagesBox.scrollTop = messagesBox.scrollHeight;
     }
     
     // Enviar mensagem
     async function sendMessage() { 
         // Verifica autenticação antes de enviar mensagem
-        const response = await fetch('/user');
-        if (response.status === 401) {
-            window.location.href = '../signup/main.html';
         try {
             const response = await fetch('/user');
             if (response.status === 401) {
-                window.location.href = '../login/main.html?reason=send-message';
+                window.location.href = '../signup/main.html';
                 return;
             }
         } catch (error) {
-            window.location.href = '../login/main.html?reason=send-message';
+            window.location.href = '../signup/main.html';
             return;
         }
         const message = messageInput.value.trim();
@@ -132,7 +137,7 @@ async function main() {
             sendMessage();
         }
     });
-
+    
     // Eventos do Socket.IO
     socket.on("message", data => appendMessage(data));
     socket.on("user-left", data => appendMessage(data, "system"));
@@ -148,18 +153,16 @@ async function main() {
         messagesBox.scrollTop = messagesBox.scrollHeight;
     });
 
-    // Caso o servidor rejeite via socket por falta de sessão
-    socket.on('unauthorized', () => {
-        window.location.href = '../login/main.html?reason=send-message';
-    });
-
     socket.on('user-joined', usersPackage => {
         // Atualizar lista de usuários conectados
         userListElement.innerHTML = ''; // Limpar lista atual
-        Object.values(JSON.parse(usersPackage)).forEach(userName => {
-            const userItem = document.createElement('li');
-            userItem.textContent = userName;
-            userListElement.appendChild(userItem);
+        const usersObj = JSON.parse(usersPackage || '{}');
+        const unique = Array.from(new Set(Object.values(usersObj)));
+        unique.forEach(userName => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.textContent = `. ${userName}`; // mantém o ponto antes do nome
+            userListElement.appendChild(li);
         });
     })
 }
@@ -187,5 +190,10 @@ async function carregarPerfil(){
         return;
     }
 }
+
+// Desconecta explicitamente ao sair/recarregar (ajuda a liberar o socket antigo)
+window.addEventListener('beforeunload', () => {
+    try { socket.disconnect(); } catch {}
+});
 
 carregarPerfil();
