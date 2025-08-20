@@ -9,9 +9,9 @@ function setupServer(httpServer, sessionMiddleware) {
   const processCommand = async (socket, username, message) => {
     const args = message.slice(1).split(' ');
     const command = args[0].toLowerCase();
-    switch (command) {
+    switch (command) {               // Comandos que o Usuário pode fazer
       case 'help':
-        socket.emit("message", {
+        socket.emit("message", {           // Mensagem de comandos do Sistema  
           username: 'Sistema',
           message: "📋 **Comandos disponíveis:**\n" +
                    "• `/help` - Mostra esta mensagem\n" +
@@ -23,14 +23,14 @@ function setupServer(httpServer, sessionMiddleware) {
         });
         break;
         
-      case 'users':
+      case 'users':                  // Números de usuários online
         const userList = Array.from(connectedUsers.values()).join(', ');
         socket.emit("message", {
           message: `👥 Usuários online (${connectedUsers.size}): ${userList}`
         });
         break;
         
-      case 'time':
+      case 'time':                    // Horário atual   
         const now = new Date().toLocaleString('pt-BR');
         socket.emit("message", {
           username: 'Sistema',
@@ -38,7 +38,7 @@ function setupServer(httpServer, sessionMiddleware) {
         });
         break;
       
-      case 'clear':
+      case 'clear':                  //  Limpar as mensagens da conversa (Limpa apenas o seu chat, não apaga a conversa para os outros)
         socket.emit("message", {
           username: 'Sistema',
           message: "🧹 Chat limpo! (apenas para você)"
@@ -50,26 +50,26 @@ function setupServer(httpServer, sessionMiddleware) {
         // Extrair a mensagem após o comando /ia
         const userMessage = args.slice(1).join(' ');
         
-        if (!userMessage.trim()) {
+        if (!userMessage.trim()) {          // Mensagem de erro caso o comando IA esteja escrito errado
           socket.emit("message", {
             username: 'Sistema',
             message: "❌ Por favor, digite uma mensagem após o comando /ia\nExemplo: /ia Olá, como você está?"
           });
           return;
         }
-        try {
+        try {                              // Mensagem correta do comando
           socket.emit("message", {
             username: 'Sistema',
             message: "🤖 Processando sua mensagem com a IA..."
           });
           
-          const answer = await answerUser(userMessage);
+          const answer = await answerUser(userMessage);  // Definindo a variavel e guardando a resposta da IA
           
           io.emit("message", {
             username: "🤖 IA",
-            message: answer
+            message: answer              // Aqui entrega a mensagem da IA
           });
-        } catch (error) {
+        } catch (error) {                // Caso a IA não entenda ou aconteça algum erro ao entender a pergunta 
           console.error("Erro ao processar comando /ia:", error);
           socket.emit("message", {
             username: 'Sistema',
@@ -77,8 +77,8 @@ function setupServer(httpServer, sessionMiddleware) {
           });
         }
         break;
-      case 'tell':
-        if (args.length < 3) {
+      case 'tell':        // Comando de Mensagem para apenas um usuário 
+        if (args.length < 3) {    // Caso de erro
           socket.emit("message", {
             username: 'Sistema',
             message: "❌ Uso incorreto do comando /tell. Exemplo: `/tell usuário mensagem`"
@@ -87,7 +87,7 @@ function setupServer(httpServer, sessionMiddleware) {
         }
         const targetUsername = args[1];
         const messageToSend = args.slice(2).join(' ');
-        // pega o id do socket do usuário alvo
+        // Pega o id do socket do usuário alvo
         const targetSocketId = Array.from(connectedUsers.entries()).find(([_, user]) => user === targetUsername)?.[0];
         if (!targetSocketId) {
           socket.emit("message", {
