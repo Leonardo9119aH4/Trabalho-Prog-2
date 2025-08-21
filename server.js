@@ -1,11 +1,18 @@
-import { createServer } from "http";
+
 import { Server } from "socket.io";
 import { answerUser } from "./scriptGemini.js";
-import { connect } from "http2";
 import { User, Message } from './database.js';
 import session from "express-session";
 
 function setupServer(httpServer, sessionMiddleware) {
+  // Criação do servidor socket
+  const io = new Server(httpServer);
+  io.use((socket, next)=>{
+    sessionMiddleware(socket.request, {}, next);
+  });
+
+  // Mapa de usuários conectados
+  let connectedUsers = new Map();
   const processCommand = async (socket, username, message) => {
     const args = message.slice(1).split(' ');
     const command = args[0].toLowerCase();
@@ -127,20 +134,25 @@ function setupServer(httpServer, sessionMiddleware) {
     catch(er){
       console.log(er);
     }
-  }
+  };
 
-  // Comece por aqui
-
+  // Escutador de conexão
   io.on("connection", socket => {
     console.log("🟢 Novo cliente conectado");
     socket.on("connection", data => {
       const mensagemSistema = `👋 ${data.username} entrou no chat!`;
-      // Insira aqui em baixo
-
-      /*connectedUsers.set(socket.id, data.username); // I <<<<<<<<<<<<<<<<< I
+      // Mensagem de entrada do usuário
+      io.emit("message", {
+        username: 'Sistema',
+        message: mensagemSistema
+      });
+      salvarMensagem("Sistema", mensagemSistema);
+      // Salva usuário conectado
+      connectedUsers.set(socket.id, data.username);
       console.log('connectedUsers:', connectedUsers);
-      io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));*/
-      /*Message.find().sort({ time: 1 }).limit(50).then(messages => { // II <<<<<<<<<<<<<<<<< II
+      io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
+      // Envia histórico de mensagens
+      Message.find().sort({ time: 1 }).limit(50).then(messages => {
         messages.forEach(msg => {
           socket.emit("message", {
             username: msg.username,
@@ -151,33 +163,50 @@ function setupServer(httpServer, sessionMiddleware) {
         console.log("Mensagens recuperadas do banco de dados e enviadas ao cliente");
       }).catch(err => {
         console.error("Erro ao buscar mensagens:", err);
-      });*/
+      });
     });
-    
-    socket.on("message", msg => { // III <<<<<<<<<<<<<<<<< III
-      /*if (!socket.request.session || !socket.request.session.user) { // Verfifica se o usuário está logado IV <<<<<<<<<<<<<<<<< IV
+
+    // Evento de mensagem
+    socket.on("message", msg => {
+      // Verifica sessão
+      if (!socket.request.session || !socket.request.session.user) {
         socket.emit("unauthorized");
         return;
-      }*/
-      
+      }
+
+      // Comandos de chat
+      if (msg.message.startsWith('/')){
+        processCommand(socket, msg.username, msg.message);
+        return;
+      }
+
       console.log(`💬 ${msg.username}: ${msg.message}`);
-      
-      if (!connectedUsers.has(socket.id)) { // Armazenar o usuário se ainda não estiver na lista V <<<<<<<<<<<<<<<<< V
+
+      // Salva usuário se não estiver na lista
+      if (!connectedUsers.has(socket.id)) {
         connectedUsers.set(socket.id, msg.username);
         console.log(`👤 Novo usuário registrado: ${msg.username}`);
       }
-      
-      /*User.findOneAndUpdate( // Incrementar o contador de mensagens enviadas
+
+      // Envia mensagem para todos
+      io.emit("message", {
+        username: msg.username,
+        message: msg.message
+      });
+
+      // Incrementa contador e salva mensagem
+      User.findOneAndUpdate(
         { username: msg.username },
         { $inc: { messagesSent: 1 } },
         { new: true }
       ).catch(err => {
         console.error("Erro ao atualizar mensagens enviadas:", err);
       });
-      salvarMensagem(msg.username, msg.message);*/
+      salvarMensagem(msg.username, msg.message);
     });
 
-    /*socket.on("typing", data => { // VI <<<<<<<<<<<<<<<<< VI
+    // Evento de digitação
+    socket.on("typing", data => {
       if (data.isTyping) {
         console.log(`${data.username} está digitando...`);
         socket.broadcast.emit("typing", {
@@ -191,8 +220,22 @@ function setupServer(httpServer, sessionMiddleware) {
           isTyping: false
         });
       }
-    });*/
-    
+    });
+
+    // Evento de desconexão
+    socket.on("disconnect", () => {
+      const username = connectedUsers.get(socket.id);
+      if (username) {
+        connectedUsers.delete(socket.id);
+        salvarMensagem("Sistema", `${username} saiu do chat!`);
+        io.emit("message", {
+          username: 'Sistema',
+          message: `👋 ${username} saiu do chat!`
+        });
+        io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
+        console.log(`🔴 Usuário desconectado: ${username}`);
+      }
+    });
   });
 };
 
