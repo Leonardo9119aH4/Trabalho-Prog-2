@@ -1,8 +1,11 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 // Troque pelos seus dados do Atlas:
-const MONGO_URI = "mongodb+srv://<user>:<password>@<clusterURL>/?retryWrites=true&w=majority&appName=Cluster0";
+const MONGO_URI = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@${process.env.DB_CLUSTER}/?retryWrites=true&w=majority`;
 
 mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
