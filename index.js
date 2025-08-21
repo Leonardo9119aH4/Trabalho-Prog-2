@@ -13,6 +13,7 @@ import { setupServer } from "./server.js";
 import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+
 const app = express();
 const httpServer = createServer(app);
 const sessionMiddleware = session({
@@ -21,11 +22,6 @@ const sessionMiddleware = session({
   saveUninitialized: true
 });
 
-httpServer.listen(3000, "0.0.0.0", () => {
-    console.log(`✅ Servidor no ar: http://localhost:3000`);
-});
-
-mongoose.connect('mongodb://localhost:27017/programacao', { useNewUrlParser: true, useUnifiedTopology: true });
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
@@ -35,5 +31,11 @@ app.use('/pages', express.static(path.join(__dirname, 'pages'))); // Servir as p
 app.get("/", (req, res) => {
   res.redirect("/pages/home/main.html");
 });
+
 routes(app);
+
+httpServer.listen(3000, "0.0.0.0", () => {
+    console.log(`✅ Servidor no ar: http://localhost:3000`);
+});
+
 setupServer(httpServer, sessionMiddleware);
