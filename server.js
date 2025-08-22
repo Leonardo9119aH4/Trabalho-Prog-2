@@ -1,24 +1,17 @@
-
+import { createServer } from "http";
 import { Server } from "socket.io";
 import { answerUser } from "./scriptGemini.js";
+import { connect } from "http2";
 import { User, Message } from './database.js';
 import session from "express-session";
 
 function setupServer(httpServer, sessionMiddleware) {
-  // Criação do servidor socket
-  const io = new Server(httpServer);
-  io.use((socket, next)=>{
-    sessionMiddleware(socket.request, {}, next);
-  });
-
-  // Mapa de usuários conectados
-  let connectedUsers = new Map();
   const processCommand = async (socket, username, message) => {
     const args = message.slice(1).split(' ');
     const command = args[0].toLowerCase();
-    switch (command) {               // Comandos que o Usuário pode fazer
+    switch (command) {
       case 'help':
-        socket.emit("message", {           // Mensagem de comandos do Sistema  
+        socket.emit("message", {
           username: 'Sistema',
           message: "📋 **Comandos disponíveis:**\n" +
                    "• `/help` - Mostra esta mensagem\n" +
@@ -30,14 +23,14 @@ function setupServer(httpServer, sessionMiddleware) {
         });
         break;
         
-      case 'users':                  // Números de usuários online
+      case 'users':
         const userList = Array.from(connectedUsers.values()).join(', ');
         socket.emit("message", {
           message: `👥 Usuários online (${connectedUsers.size}): ${userList}`
         });
         break;
         
-      case 'time':                    // Horário atual   
+      case 'time':
         const now = new Date().toLocaleString('pt-BR');
         socket.emit("message", {
           username: 'Sistema',
@@ -45,7 +38,7 @@ function setupServer(httpServer, sessionMiddleware) {
         });
         break;
       
-      case 'clear':                  //  Limpar as mensagens da conversa (Limpa apenas o seu chat, não apaga a conversa para os outros)
+      case 'clear':
         socket.emit("message", {
           username: 'Sistema',
           message: "🧹 Chat limpo! (apenas para você)"
@@ -57,26 +50,26 @@ function setupServer(httpServer, sessionMiddleware) {
         // Extrair a mensagem após o comando /ia
         const userMessage = args.slice(1).join(' ');
         
-        if (!userMessage.trim()) {          // Mensagem de erro caso o comando IA esteja escrito errado
+        if (!userMessage.trim()) {
           socket.emit("message", {
             username: 'Sistema',
             message: "❌ Por favor, digite uma mensagem após o comando /ia\nExemplo: /ia Olá, como você está?"
           });
           return;
         }
-        try {                              // Mensagem correta do comando
+        try {
           socket.emit("message", {
             username: 'Sistema',
             message: "🤖 Processando sua mensagem com a IA..."
           });
           
-          const answer = await answerUser(userMessage);  // Definindo a variavel e guardando a resposta da IA
+          const answer = await answerUser(userMessage);
           
           io.emit("message", {
             username: "🤖 IA",
-            message: answer              // Aqui entrega a mensagem da IA
+            message: answer
           });
-        } catch (error) {                // Caso a IA não entenda ou aconteça algum erro ao entender a pergunta 
+        } catch (error) {
           console.error("Erro ao processar comando /ia:", error);
           socket.emit("message", {
             username: 'Sistema',
@@ -84,8 +77,8 @@ function setupServer(httpServer, sessionMiddleware) {
           });
         }
         break;
-      case 'tell':        // Comando de Mensagem para apenas um usuário 
-        if (args.length < 3) {    // Caso de erro
+      case 'tell':
+        if (args.length < 3) {
           socket.emit("message", {
             username: 'Sistema',
             message: "❌ Uso incorreto do comando /tell. Exemplo: `/tell usuário mensagem`"
@@ -94,7 +87,7 @@ function setupServer(httpServer, sessionMiddleware) {
         }
         const targetUsername = args[1];
         const messageToSend = args.slice(2).join(' ');
-        // Pega o id do socket do usuário alvo
+        // pega o id do socket do usuário alvo
         const targetSocketId = Array.from(connectedUsers.entries()).find(([_, user]) => user === targetUsername)?.[0];
         if (!targetSocketId) {
           socket.emit("message", {
@@ -134,25 +127,20 @@ function setupServer(httpServer, sessionMiddleware) {
     catch(er){
       console.log(er);
     }
-  };
+  }
 
-  // Escutador de conexão
+  // Comece por aqui
+
   io.on("connection", socket => {
     console.log("🟢 Novo cliente conectado");
     socket.on("connection", data => {
       const mensagemSistema = `👋 ${data.username} entrou no chat!`;
-      // Mensagem de entrada do usuário
-      io.emit("message", {
-        username: 'Sistema',
-        message: mensagemSistema
-      });
-      salvarMensagem("Sistema", mensagemSistema);
-      // Salva usuário conectado
-      connectedUsers.set(socket.id, data.username);
+      // Insira aqui em baixo
+
+      /*connectedUsers.set(socket.id, data.username); // I <<<<<<<<<<<<<<<<< I
       console.log('connectedUsers:', connectedUsers);
-      io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
-      // Envia histórico de mensagens
-      Message.find().sort({ time: 1 }).limit(50).then(messages => {
+      io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));*/
+      /*Message.find().sort({ time: 1 }).limit(50).then(messages => { // II <<<<<<<<<<<<<<<<< II
         messages.forEach(msg => {
           socket.emit("message", {
             username: msg.username,
@@ -163,50 +151,33 @@ function setupServer(httpServer, sessionMiddleware) {
         console.log("Mensagens recuperadas do banco de dados e enviadas ao cliente");
       }).catch(err => {
         console.error("Erro ao buscar mensagens:", err);
-      });
+      });*/
     });
-
-    // Evento de mensagem
-    socket.on("message", msg => {
-      // Verifica sessão
-      if (!socket.request.session || !socket.request.session.user) {
+    
+    socket.on("message", msg => { // III <<<<<<<<<<<<<<<<< III
+      /*if (!socket.request.session || !socket.request.session.user) { // Verfifica se o usuário está logado IV <<<<<<<<<<<<<<<<< IV
         socket.emit("unauthorized");
         return;
-      }
-
-      // Comandos de chat
-      if (msg.message.startsWith('/')){
-        processCommand(socket, msg.username, msg.message);
-        return;
-      }
-
+      }*/
+      
       console.log(`💬 ${msg.username}: ${msg.message}`);
-
-      // Salva usuário se não estiver na lista
-      if (!connectedUsers.has(socket.id)) {
+      
+      if (!connectedUsers.has(socket.id)) { // Armazenar o usuário se ainda não estiver na lista V <<<<<<<<<<<<<<<<< V
         connectedUsers.set(socket.id, msg.username);
         console.log(`👤 Novo usuário registrado: ${msg.username}`);
       }
-
-      // Envia mensagem para todos
-      io.emit("message", {
-        username: msg.username,
-        message: msg.message
-      });
-
-      // Incrementa contador e salva mensagem
-      User.findOneAndUpdate(
+      
+      /*User.findOneAndUpdate( // Incrementar o contador de mensagens enviadas
         { username: msg.username },
         { $inc: { messagesSent: 1 } },
         { new: true }
       ).catch(err => {
         console.error("Erro ao atualizar mensagens enviadas:", err);
       });
-      salvarMensagem(msg.username, msg.message);
+      salvarMensagem(msg.username, msg.message);*/
     });
 
-    // Evento de digitação
-    socket.on("typing", data => {
+    /*socket.on("typing", data => { // VI <<<<<<<<<<<<<<<<< VI
       if (data.isTyping) {
         console.log(`${data.username} está digitando...`);
         socket.broadcast.emit("typing", {
@@ -220,22 +191,8 @@ function setupServer(httpServer, sessionMiddleware) {
           isTyping: false
         });
       }
-    });
-
-    // Evento de desconexão
-    socket.on("disconnect", () => {
-      const username = connectedUsers.get(socket.id);
-      if (username) {
-        connectedUsers.delete(socket.id);
-        salvarMensagem("Sistema", `${username} saiu do chat!`);
-        io.emit("message", {
-          username: 'Sistema',
-          message: `👋 ${username} saiu do chat!`
-        });
-        io.emit("user-joined", JSON.stringify(Object.fromEntries(connectedUsers)));
-        console.log(`🔴 Usuário desconectado: ${username}`);
-      }
-    });
+    });*/
+    
   });
 };
 
