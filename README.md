@@ -1,3 +1,110 @@
+# Socket Chat - Chat em Tempo Real
+
+Um aplicativo de chat em tempo real desenvolvido com Node.js, Socket.IO e MongoDB, com integração de IA para conversas interativas.
+
+## 🚀 Características
+
+- **Chat em tempo real** com WebSocket (Socket.IO)
+- **Sistema de autenticação** com sessões
+- **Integração com IA** (Google Gemini) para conversas inteligentes
+- **Comandos especiais** do chat (/help, /users, /time, /clear, /ia, /tell)
+- **Interface moderna** com design glassmorphism
+- **Histórico de mensagens** persistente no MongoDB
+- **Indicação de usuários online**
+- **Mensagens privadas** entre usuários
+
+## 🛠️ Tecnologias Utilizadas
+
+- **Backend**: Node.js, Express.js
+- **WebSocket**: Socket.IO
+- **Banco de Dados**: MongoDB com Mongoose
+- **IA**: Google Gemini API
+- **Frontend**: HTML5, CSS3, JavaScript, Bootstrap 5
+- **Autenticação**: Express Session
+
+## 📋 Pré-requisitos
+
+- Node.js (versão 16 ou superior)
+- MongoDB (local ou MongoDB Atlas)
+- Chave da API do Google Gemini (opcional, para funcionalidade de IA)
+
+## ⚙️ Instalação
+
+1. Clone o repositório:
+```bash
+git clone https://github.com/Leonardo9119aH4/Trabalho-Prog-2.git
+cd Trabalho-Prog-2
+```
+
+2. Instale as dependências:
+```bash
+npm install
+```
+
+3. Configure as variáveis de ambiente:
+Crie um arquivo `.env` na raiz do projeto e adicione:
+```env
+GEMINI_API_KEY=sua_chave_da_api_gemini_aqui
+MONGODB_URI=sua_uri_do_mongodb
+```
+
+4. Inicie o servidor:
+```bash
+npm start
+```
+
+5. Acesse o aplicativo:
+Abra seu navegador e vá para `http://localhost:3000`
+
+## 🎮 Como Usar
+
+1. **Registro/Login**: Crie uma conta ou faça login
+2. **Chat**: Digite mensagens no campo de input e pressione Enter
+3. **Comandos especiais**:
+   - `/help` - Mostra todos os comandos disponíveis
+   - `/users` - Lista usuários online
+   - `/time` - Mostra horário atual
+   - `/clear` - Limpa seu chat (apenas local)
+   - `/ia [mensagem]` - Conversa com a IA
+   - `/tell [usuário] [mensagem]` - Envia mensagem privada
+
+## 📁 Estrutura do Projeto
+
+```
+├── pages/
+│   ├── home/       # Página inicial
+│   ├── login/      # Página de login
+│   ├── signup/     # Página de cadastro
+│   └── chat/       # Interface do chat
+├── index.js        # Ponto de entrada da aplicação
+├── server.js       # Configuração do servidor Socket.IO
+├── routes.js       # Rotas da API
+├── database.js     # Modelos do MongoDB
+├── scriptGemini.js # Integração com IA
+└── package.json    # Dependências e scripts
+```
+
+## 🤝 Contribuindo
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto está sob a licença ISC. Veja o arquivo `LICENSE` para mais detalhes.
+
+## 👨‍💻 Desenvolvedor
+
+Leonardo - [@Leonardo9119aH4](https://github.com/Leonardo9119aH4)
+
+---
+
+<!--
+CONTEÚDO ORIGINAL COMENTADO (Tutorial de implementação):
+
 # Web Socket - como programar
 
 Para poder criar um servidor web socket com conexão em tempo real, primeiro é necessário configurar e criar o servidor, de forma análoga ao que acontece com o Express.
@@ -93,3 +200,4 @@ Agora ligue o servidor e acesse a url `localhost:3000/` para testar. Para ligar 
 ```bash
 npm run start
 ```
+-->
